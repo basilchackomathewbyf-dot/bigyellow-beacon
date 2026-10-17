@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import os
 from collections.abc import AsyncGenerator
+from pathlib import Path
 
 import pytest_asyncio
 from httpx import ASGITransport, AsyncClient
@@ -23,8 +24,10 @@ os.environ.setdefault("BEACON_SO_PIN", "5678")
 os.environ.setdefault("BEACON_VESSEL_ID", "VSL-DEMO01")
 os.environ.setdefault("BEACON_VESSEL_NAME", "MV Demo Star")
 os.environ.setdefault("BEACON_EDGE_PUBLIC_URL", "http://192.168.1.10:8080")
-os.environ.setdefault("BEACON_DATA_DIR", "./data-test")
-os.environ.setdefault("BEACON_CONTRACTS_DIR", "../contracts")
+_edge_root = Path(__file__).resolve().parent.parent
+_contracts = _edge_root.parent / "contracts"
+os.environ.setdefault("BEACON_DATA_DIR", str(_edge_root / "data-test"))
+os.environ.setdefault("BEACON_CONTRACTS_DIR", str(_contracts))
 
 from app.auth.staff import ensure_staff_seeded, reset_lockouts  # noqa: E402
 from app.config import get_settings  # noqa: E402
