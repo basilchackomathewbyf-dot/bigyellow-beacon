@@ -1,0 +1,9 @@
+.env
+*.env
+**/service-account*.json
+edge/models/
+**/node_modules/
+**/dist/
+__pycache__/
+.pytest_cache/
+.DS_Store

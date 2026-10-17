@@ -1,0 +1,57 @@
+# E1: db + api only. model and worker land in later milestones.
+services:
+  db:
+    image: pgvector/pgvector:pg16
+    # Host 5433 avoids clashing with a local Postgres on 5432.
+    ports:
+      - "5433:5432"
+    environment:
+      POSTGRES_USER: beacon
+      POSTGRES_PASSWORD: beacon
+      POSTGRES_DB: beacon
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U beacon -d beacon"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    networks:
+      - beacon
+
+  api:
+    build: .
+    ports:
+      - "0.0.0.0:8080:8080"
+    environment:
+      BEACON_VESSEL_ID: VSL-DEMO01
+      BEACON_VESSEL_NAME: "MV Demo Star"
+      BEACON_EDGE_PUBLIC_URL: http://192.168.1.10:8080
+      BEACON_DATABASE_URL: postgresql+asyncpg://beacon:beacon@db:5432/beacon
+      BEACON_MODEL_URL: http://model:8081
+      BEACON_EDGE_SECRET: change-me
+      BEACON_MASTER_USERNAME: master
+      BEACON_MASTER_PIN: "1234"
+      BEACON_SO_USERNAME: safety
+      BEACON_SO_PIN: "5678"
+      BEACON_DATA_DIR: /data
+      BEACON_SHIP_WEB_DIST: /app/ship-web
+      BEACON_CONTRACTS_DIR: /app/contracts
+      BEACON_LINK_MODE: auto
+      BEACON_K_ANON: "5"
+    volumes:
+      - api_data:/data
+      - ../contracts:/app/contracts:ro
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - beacon
+
+networks:
+  beacon:
+    driver: bridge
+
+volumes:
+  pgdata:
+  api_data:
