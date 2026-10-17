@@ -9,3 +9,5 @@ data/
 data-test/
 .env
 .mypy_cache/
+.venv/
+**/.venv/
