@@ -6,14 +6,19 @@ import logging
 import time
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI, Request
+from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
-from starlette.middleware.base import BaseHTTPMiddleware
 
 from app.api import auth as auth_api
 from app.api import events as events_api
 from app.api import health as health_api
+from app.api import inbox as inbox_api
+from app.api import learnings as learnings_api
 from app.api import master as master_api
+from app.api import media as media_api
+from app.api import reports as reports_api
+from app.api import sync as sync_api
+from app.api import tickets as tickets_api
 from app.auth.jwt_secret import require_jwt_secret
 from app.config import get_settings
 from app.db.session import init_engine
@@ -23,22 +28,40 @@ from app.logging import setup_logging
 logger = logging.getLogger("beacon.edge")
 
 
-class AccessLogMiddleware(BaseHTTPMiddleware):
-    """Log route + status + latency; never bodies, tokens, PINs or codes."""
+class AccessLogMiddleware:
+    """ASGI access log — never bodies/tokens. Pure ASGI so SSE streams are not buffered."""
 
-    async def dispatch(self, request: Request, call_next):
+    def __init__(self, app):
+        self.app = app
+
+    async def __call__(self, scope, receive, send):
+        if scope["type"] != "http":
+            await self.app(scope, receive, send)
+            return
+
         start = time.perf_counter()
-        response = await call_next(request)
-        latency_ms = int((time.perf_counter() - start) * 1000)
-        logger.info(
-            "request",
-            extra={
-                "route": f"{request.method} {request.url.path}",
-                "status": response.status_code,
-                "latency_ms": latency_ms,
-            },
-        )
-        return response
+        status_code = 500
+        method = scope.get("method", "?")
+        path = scope.get("path", "?")
+
+        async def send_wrapper(message):
+            nonlocal status_code
+            if message["type"] == "http.response.start":
+                status_code = message["status"]
+            await send(message)
+
+        try:
+            await self.app(scope, receive, send_wrapper)
+        finally:
+            latency_ms = int((time.perf_counter() - start) * 1000)
+            logger.info(
+                "request",
+                extra={
+                    "route": f"{method} {path}",
+                    "status": status_code,
+                    "latency_ms": latency_ms,
+                },
+            )
 
 
 @asynccontextmanager
@@ -64,6 +87,12 @@ def create_app(*, validate_secret: bool = True) -> FastAPI:
     application.include_router(health_api.router, prefix="/api/v1")
     application.include_router(auth_api.router, prefix="/api/v1")
     application.include_router(master_api.router, prefix="/api/v1")
+    application.include_router(reports_api.router, prefix="/api/v1")
+    application.include_router(tickets_api.router, prefix="/api/v1")
+    application.include_router(inbox_api.router, prefix="/api/v1")
+    application.include_router(learnings_api.router, prefix="/api/v1")
+    application.include_router(sync_api.router, prefix="/api/v1")
+    application.include_router(media_api.router, prefix="/api/v1")
     application.include_router(events_api.router, prefix="/api/v1")
 
     dist = settings.crew_web_dist

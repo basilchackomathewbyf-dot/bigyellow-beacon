@@ -1,4 +1,4 @@
-.PHONY: up down seed test migrate install pair-master mock-shore run fmt
+.PHONY: up down seed test migrate install pair-master mock-shore worker run fmt
 
 # Settings load from edge/.env automatically (see app/config.py). No need to source .env.
 
@@ -36,7 +36,11 @@ fmt:
 	.venv/bin/ruff check --fix . || true
 
 mock-shore:
-	@echo "M4: python -m app.tools.mock_shore (not yet)"
+	BEACON_SHORE_API_KEY=$${BEACON_SHORE_API_KEY:-demo-shore-api-key} \
+		.venv/bin/python tools/mock_shore.py
+
+worker:
+	.venv/bin/python -m app.sync.worker
 
 # Placeholders for later milestones
 fetch-models:

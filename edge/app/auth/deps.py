@@ -62,11 +62,12 @@ def _extract_bearer(authorization: str | None) -> str | None:
     return token or None
 
 
-async def get_current_user(
+async def resolve_principal(
     request: Request,
-    session: Annotated[AsyncSession, Depends(get_session)],
-    authorization: Annotated[str | None, Header()] = None,
-    access_token: Annotated[str | None, Query()] = None,
+    session: AsyncSession,
+    *,
+    authorization: str | None = None,
+    access_token: str | None = None,
 ) -> AuthPrincipal:
     """Resolve session JWT from Authorization Bearer, or ?access_token= on /events."""
     token = _extract_bearer(authorization)
@@ -120,6 +121,17 @@ async def get_current_user(
         device_id=device_id,
         crew=crew,
         device=device,
+    )
+
+
+async def get_current_user(
+    request: Request,
+    session: Annotated[AsyncSession, Depends(get_session)],
+    authorization: Annotated[str | None, Header()] = None,
+    access_token: Annotated[str | None, Query()] = None,
+) -> AuthPrincipal:
+    return await resolve_principal(
+        request, session, authorization=authorization, access_token=access_token
     )
 
 

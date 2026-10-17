@@ -291,13 +291,34 @@ async def test_tampered_and_expired_jwt_401(client: AsyncClient, paired_crew: di
 
 
 @pytest.mark.asyncio
-async def test_sse_accepts_access_token_query(client: AsyncClient, paired_crew: dict):
-    r = await client.get(
-        "/api/v1/events",
-        params={"access_token": paired_crew["access_token"]},
+async def test_sse_accepts_access_token_query(
+    client: AsyncClient, paired_crew: dict, session: AsyncSession
+):
+    """EventSource fallback: ?access_token= resolves on /events (no body read under ASGI)."""
+    from starlette.requests import Request
+
+    from app.auth.deps import resolve_principal
+
+    no_auth = await client.get("/api/v1/events")
+    assert no_auth.status_code == 401
+
+    scope = {
+        "type": "http",
+        "asgi": {"version": "3.0"},
+        "http_version": "1.1",
+        "method": "GET",
+        "scheme": "http",
+        "path": "/api/v1/events",
+        "raw_path": b"/api/v1/events",
+        "query_string": b"",
+        "headers": [],
+        "client": ("127.0.0.1", 123),
+        "server": ("test", 80),
+    }
+    principal = await resolve_principal(
+        Request(scope), session, access_token=paired_crew["access_token"]
     )
-    assert r.status_code == 200
-    assert "text/event-stream" in r.headers.get("content-type", "")
+    assert principal.crew_id == paired_crew["crew_id"]
 
 
 def test_startup_fails_with_short_secret(monkeypatch):

@@ -26,6 +26,7 @@ os.environ.setdefault("BEACON_VESSEL_NAME", "MV Demo Star")
 os.environ.setdefault("BEACON_VESSEL_SECRET", "demo-vessel-secret-v-0007")
 os.environ.setdefault("BEACON_EDGE_URL", "https://beacon.ship.local:8443")
 os.environ.setdefault("BEACON_AI", "fake")
+os.environ.setdefault("BEACON_AI_FAKE_DELAY", "0")
 os.environ.setdefault("BEACON_DATA_DIR", str(_edge_root / "data-test"))
 os.environ.setdefault("BEACON_ROSTER_FILE", str(_roster))
 os.environ.setdefault("BEACON_K_ANON", "5")
@@ -36,6 +37,7 @@ from app.config import get_settings  # noqa: E402
 from app.db import models  # noqa: F401, E402
 from app.db.base import Base  # noqa: E402
 from app.db.session import get_session  # noqa: E402
+from app.events.hub import get_hub  # noqa: E402
 from app.main import create_app  # noqa: E402
 from app.seed import seed_roster  # noqa: E402
 
@@ -75,6 +77,7 @@ async def session(engine) -> AsyncGenerator[AsyncSession, None]:
         await session.commit()
         reset_rate_limits()
         reset_revoke_cache()
+        get_hub().reset()
         yield session
 
 
