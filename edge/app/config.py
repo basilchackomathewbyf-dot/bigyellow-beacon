@@ -3,11 +3,16 @@ from pathlib import Path
 
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
+# Always edge/.env (resolved from this file), not CWD — make/uvicorn/scripts
+# pick up BEACON_* without `source .env`.
+_EDGE_ROOT = Path(__file__).resolve().parent.parent
+_ENV_FILE = _EDGE_ROOT / ".env"
+
 
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(
         env_prefix="BEACON_",
-        env_file=".env",
+        env_file=str(_ENV_FILE),
         env_file_encoding="utf-8",
         extra="ignore",
     )

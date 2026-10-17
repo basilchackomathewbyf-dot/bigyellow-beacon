@@ -40,8 +40,7 @@ def build_fallback_brief(context: dict[str, Any]) -> dict[str, Any]:
         crew_trend = {
             "direction": direction,
             "summary": (
-                f"Today n={n}: mood {mood:.1f}, fatigue {fatigue:.1f} (0–10). "
-                f"Trend: {direction}."
+                f"Today n={n}: mood {mood:.1f}, fatigue {fatigue:.1f} (0–10). Trend: {direction}."
             )[:240],
             "k_anonymity_ok": True,
         }

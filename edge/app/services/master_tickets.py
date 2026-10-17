@@ -2,11 +2,17 @@
 
 from __future__ import annotations
 
+from beacon_contract.edge_api import MasterTicket
+from beacon_contract.enums import (
+    HazardType,
+    IsmCategory,
+    OnboardStatus,
+    RankBand,
+    Severity,
+    ShoreStatus,
+)
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
-
-from beacon_contract.edge_api import MasterTicket
-from beacon_contract.enums import HazardType, IsmCategory, OnboardStatus, RankBand, Severity, ShoreStatus
 
 from app.db.models import Crew, Ticket
 
@@ -52,9 +58,7 @@ async def list_master_tickets(
     crew_ids = {t.reporter_crew_id for t in tickets if t.share_name_with_master}
     names: dict[str, str] = {}
     if crew_ids:
-        rows = (
-            await session.execute(select(Crew).where(Crew.id.in_(crew_ids)))
-        ).scalars().all()
+        rows = (await session.execute(select(Crew).where(Crew.id.in_(crew_ids)))).scalars().all()
         names = {c.id: c.display_name for c in rows}
 
     return [

@@ -9,19 +9,16 @@ from beacon_contract import new_id
 from httpx import AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.db.models import Ticket
+from app.db.models import Checkin, Ticket
 from app.services.master_tickets import ticket_to_master_view
 from app.services.wellbeing_service import daily_k_anon
-from app.db.models import Checkin
 
 
 @pytest.mark.asyncio
 async def test_k_anonymity_4_suppressed_5_visible(session: AsyncSession):
     today = date.today()
     # 4 distinct crew → suppressed
-    for i, crew_id in enumerate(
-        ["c-0007-aru", "c-0007-ab2", "c-0007-os1", "c-0007-bos"]
-    ):
+    for i, crew_id in enumerate(["c-0007-aru", "c-0007-ab2", "c-0007-os1", "c-0007-bos"]):
         session.add(
             Checkin(
                 id=new_id(),

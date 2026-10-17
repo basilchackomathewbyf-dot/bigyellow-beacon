@@ -64,8 +64,8 @@ async def summary(session: AsyncSession, *, days: int = 14) -> dict[str, Any]:
     bands: dict[str, str] = {}
     if crew_ids:
         crew_rows = (
-            await session.execute(select(Crew).where(Crew.id.in_(crew_ids)))
-        ).scalars().all()
+            (await session.execute(select(Crew).where(Crew.id.in_(crew_ids)))).scalars().all()
+        )
         bands = {c.id: c.rank_band for c in crew_rows}
 
     by_date: dict[date, list[Checkin]] = {}

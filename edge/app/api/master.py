@@ -26,6 +26,4 @@ async def master_tickets(
     onboard_status: str | None = None,
     severity: int | None = None,
 ) -> list[MasterTicket]:
-    return await list_master_tickets(
-        session, onboard_status=onboard_status, severity=severity
-    )
+    return await list_master_tickets(session, onboard_status=onboard_status, severity=severity)

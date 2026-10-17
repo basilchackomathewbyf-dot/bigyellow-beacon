@@ -5,7 +5,7 @@ Revises:
 Create Date: 2026-10-17
 """
 
-from typing import Sequence, Union
+from collections.abc import Sequence
 
 import sqlalchemy as sa
 from alembic import op
@@ -13,9 +13,9 @@ from pgvector.sqlalchemy import Vector
 from sqlalchemy.dialects import postgresql
 
 revision: str = "001_e1_initial"
-down_revision: Union[str, None] = None
-branch_labels: Union[str, Sequence[str], None] = None
-depends_on: Union[str, Sequence[str], None] = None
+down_revision: str | None = None
+branch_labels: str | Sequence[str] | None = None
+depends_on: str | Sequence[str] | None = None
 
 
 def upgrade() -> None:
@@ -94,9 +94,7 @@ def upgrade() -> None:
         sa.Column("action_text_en", sa.Text(), nullable=True),
         sa.Column("action_owner_rank", sa.String(64), nullable=True),
         sa.Column("action_due", sa.Date(), nullable=True),
-        sa.Column(
-            "synced_to_shore", sa.Boolean(), nullable=False, server_default=sa.text("false")
-        ),
+        sa.Column("synced_to_shore", sa.Boolean(), nullable=False, server_default=sa.text("false")),
         sa.Column("embedding", Vector(768), nullable=True),
     )
     op.create_index("ix_near_misses_reporter_ref", "near_misses", ["reporter_ref"])
@@ -156,9 +154,7 @@ def upgrade() -> None:
         sa.Column("social_connection", sa.Integer(), nullable=True),
         sa.Column("themes", postgresql.ARRAY(sa.Text()), nullable=True),
         sa.Column("source", sa.String(16), nullable=False),
-        sa.Column(
-            "rail_triggered", sa.Boolean(), nullable=False, server_default=sa.text("false")
-        ),
+        sa.Column("rail_triggered", sa.Boolean(), nullable=False, server_default=sa.text("false")),
         sa.Column("rail_category", sa.String(64), nullable=True),
     )
     op.create_index("ix_checkin_scores_reporter_ref", "checkin_scores", ["reporter_ref"])

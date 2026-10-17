@@ -1,6 +1,6 @@
-.PHONY: up down seed test migrate install pair-master mock-shore
+.PHONY: up down seed test migrate install pair-master mock-shore run fmt
 
-# Local / no-Docker: export BEACON_DATABASE_URL=postgresql+asyncpg://beacon:beacon@localhost:5433/beacon
+# Settings load from edge/.env automatically (see app/config.py). No need to source .env.
 
 install:
 	pip install -e ".[dev]"
@@ -25,8 +25,15 @@ seed: migrate
 pair-master:
 	python -m app.pair_master
 
+run:
+	.venv/bin/uvicorn app.main:app --port 8080 --reload
+
 test:
-	pytest -q
+	.venv/bin/pytest -q
+
+fmt:
+	.venv/bin/ruff format .
+	.venv/bin/ruff check --fix . || true
 
 mock-shore:
 	@echo "M4: python -m app.tools.mock_shore (not yet)"

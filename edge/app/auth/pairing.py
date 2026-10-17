@@ -42,9 +42,7 @@ def build_qr_payload(
     )
 
 
-async def create_pairing_code(
-    session: AsyncSession, crew_id: str
-) -> tuple[str, PairingCode]:
+async def create_pairing_code(session: AsyncSession, crew_id: str) -> tuple[str, PairingCode]:
     """Create a one-time code. Returns (plaintext, row) — plaintext is never persisted."""
     crew = await session.get(Crew, crew_id)
     if crew is None or not crew.active:
@@ -72,9 +70,7 @@ class PairingCodeError(Exception):
         super().__init__(reason)
 
 
-async def consume_pairing_code(
-    session: AsyncSession, code: str, crew_id: str
-) -> PairingCode:
+async def consume_pairing_code(session: AsyncSession, code: str, crew_id: str) -> PairingCode:
     """Validate and mark used. Raises PairingCodeError on failure."""
     now = datetime.now(UTC)
     normalized = normalize_pairing_code(code)

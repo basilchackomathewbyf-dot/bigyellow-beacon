@@ -67,7 +67,9 @@ async def test_pairing_happy_path(client: AsyncClient, paired_master: dict):
 
 
 @pytest.mark.asyncio
-async def test_pairing_code_stored_hashed(client: AsyncClient, session: AsyncSession, paired_master: dict):
+async def test_pairing_code_stored_hashed(
+    client: AsyncClient, session: AsyncSession, paired_master: dict
+):
     r = await client.post(
         "/api/v1/auth/pairing-codes",
         headers=paired_master["headers"],
@@ -197,9 +199,7 @@ async def test_five_bad_pins_423_then_success_after_lock(
 
 
 @pytest.mark.asyncio
-async def test_pin_lockout_survives_app_restart(
-    engine, session: AsyncSession, paired_crew: dict
-):
+async def test_pin_lockout_survives_app_restart(engine, session: AsyncSession, paired_crew: dict):
     """failed_pin_attempts live on devices — a new app process still sees the lock."""
     async with _app_client(engine) as client1:
         for _ in range(3):

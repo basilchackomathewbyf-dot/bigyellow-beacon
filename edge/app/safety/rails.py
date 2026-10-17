@@ -10,6 +10,7 @@ by BYF's clinical/psychology team before any real crew sees them.
 Port this file 1:1 to Kotlin/Swift for on-device use; keep the JSON
 lexicon (lexicon.json) as the single source of truth.
 """
+
 from __future__ import annotations
 
 import json
@@ -24,8 +25,8 @@ LEXICON_PATH = Path(__file__).resolve().parent / "rules" / "lexicon.json"
 @dataclass(frozen=True)
 class RailResult:
     triggered: bool
-    category: str | None = None      # crisis | harm_to_others | medical_emergency
-    stage: str | None = None         # pre_model | post_model
+    category: str | None = None  # crisis | harm_to_others | medical_emergency
+    stage: str | None = None  # pre_model | post_model
     matched_rule: str | None = None  # rule id, for audit; never the user's text
     fixed_response: str | None = None
 
@@ -58,18 +59,24 @@ class SafetyRails:
         t = _normalise(text)
         for rule_id, category, pat in self.rules:
             if pat.search(t):
-                return RailResult(True, category, "pre_model", rule_id, self._response(category, lang))
+                return RailResult(
+                    True, category, "pre_model", rule_id, self._response(category, lang)
+                )
         return RailResult(False)
 
     def check_output(self, model_text: str, crew_text: str, lang: str = "en") -> RailResult:
         # Re-check crew text (defence in depth) then the model's own words.
         pre = self.check_input(crew_text, lang)
         if pre.triggered:
-            return RailResult(True, pre.category, "post_model", pre.matched_rule, pre.fixed_response)
+            return RailResult(
+                True, pre.category, "post_model", pre.matched_rule, pre.fixed_response
+            )
         t = _normalise(model_text)
         for rule_id, pat in self.output_rules:
             if pat.search(t):
-                return RailResult(True, "crisis", "post_model", rule_id, self._response("crisis", lang))
+                return RailResult(
+                    True, "crisis", "post_model", rule_id, self._response("crisis", lang)
+                )
         return RailResult(False)
 
 
@@ -77,9 +84,9 @@ def guarded_turn(rails: SafetyRails, crew_text: str, lang: str, generate) -> tup
     """Wrap one model turn. `generate` is any callable(str) -> str (Gemma on device, Gemini ashore)."""
     pre = rails.check_input(crew_text, lang)
     if pre.triggered:
-        return pre.fixed_response, pre          # model never called
+        return pre.fixed_response, pre  # model never called
     reply = generate(crew_text)
     post = rails.check_output(reply, crew_text, lang)
     if post.triggered:
-        return post.fixed_response, post       # model reply discarded
+        return post.fixed_response, post  # model reply discarded
     return reply, RailResult(False)

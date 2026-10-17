@@ -31,7 +31,7 @@ services:
       BEACON_EDGE_URL: https://beacon.ship.local:8443
       BEACON_DATABASE_URL: postgresql+asyncpg://beacon:beacon@db:5432/beacon
       # Generate: python -c "import secrets; print(secrets.token_urlsafe(48))"
-      BEACON_JWT_SECRET: replace-me-with-a-32-plus-char-secret-value!!
+      BEACON_JWT_SECRET: 9iL7AdvYMQ_TJPHnSbckQveubr51-XmB8cdPzmGzWBGqVP2zkRi2BKmJeiTUlCEd
       BEACON_AI: fake
       BEACON_DATA_DIR: /data
       BEACON_WEB_DIST: /app/crew-web
