@@ -1,0 +1,83 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://bigyellowfish.ai/beacon/checkin.schema.json",
+  "title": "CheckinResult",
+  "description": "Output of one 60-second wellbeing check-in. Stored encrypted ON DEVICE. The transcript never leaves the phone; only the fields marked syncable go into the delta.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "checkin_id", "schema_version", "vessel_id", "reporter_ref", "created_at",
+    "language", "scores", "safety", "local_only"
+  ],
+  "properties": {
+    "checkin_id": { "type": "string", "format": "uuid" },
+    "schema_version": { "const": "1.0" },
+    "vessel_id": { "type": "string", "pattern": "^VSL-[A-Z0-9]{3,12}$" },
+    "reporter_ref": { "type": "string", "pattern": "^anon-[a-f0-9]{8,32}$" },
+    "rank_group": {
+      "type": "string",
+      "enum": ["deck_officer", "engine_officer", "deck_rating", "engine_rating", "catering", "cadet", "undisclosed"],
+      "default": "undisclosed"
+    },
+    "created_at": { "type": "string", "format": "date-time" },
+    "language": { "type": "string", "pattern": "^[a-z]{2,3}(-[A-Za-z0-9]{2,8})*$" },
+    "duration_s": { "type": "integer", "minimum": 0, "maximum": 600 },
+    "scores": {
+      "type": "object",
+      "description": "0-10 scale. TODO: map to the indices BYF's fleet dashboard already uses so ashore views need no new metric.",
+      "additionalProperties": false,
+      "required": ["mood", "fatigue", "workload"],
+      "properties": {
+        "mood": { "type": "number", "minimum": 0, "maximum": 10, "description": "10 = very good" },
+        "fatigue": { "type": "number", "minimum": 0, "maximum": 10, "description": "10 = exhausted" },
+        "workload": { "type": "number", "minimum": 0, "maximum": 10, "description": "10 = overwhelmed" },
+        "sleep_hours_reported": { "type": ["number", "null"], "minimum": 0, "maximum": 24 },
+        "social_connection": { "type": ["number", "null"], "minimum": 0, "maximum": 10 }
+      }
+    },
+    "themes": {
+      "type": "array",
+      "description": "Coarse, non-identifying topics. Syncable only via k-anonymous aggregates.",
+      "items": {
+        "type": "string",
+        "enum": ["sleep", "workload", "family_home", "conflict_onboard", "homesick", "food", "connectivity", "contract_length", "physical_pain", "positive_day"]
+      },
+      "uniqueItems": true,
+      "maxItems": 5
+    },
+    "safety": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["rail_triggered", "escalate"],
+      "properties": {
+        "rail_triggered": { "type": "boolean", "description": "Deterministic rail fired (pre- or post-model)." },
+        "rail_stage": { "type": ["string", "null"], "enum": ["pre_model", "post_model", null] },
+        "rail_category": { "type": ["string", "null"], "enum": ["crisis", "harm_to_others", "medical_emergency", null] },
+        "escalate": { "type": "boolean" },
+        "consent_to_contact": {
+          "type": ["boolean", "null"],
+          "description": "Asked only after the fixed response. null = not asked / no answer."
+        }
+      }
+    },
+    "local_only": {
+      "type": "object",
+      "description": "NEVER synced. Kept in the encrypted local store for the crew member's own history.",
+      "additionalProperties": false,
+      "properties": {
+        "transcript": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["role", "text"],
+            "properties": {
+              "role": { "type": "string", "enum": ["beacon", "crew"] },
+              "text": { "type": "string" }
+            }
+          }
+        },
+        "model": { "type": "string" }
+      }
+    }
+  }
+}

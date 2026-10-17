@@ -1,0 +1,297 @@
+---
+description: Beacon EDGE server spec (ship-side FastAPI, Gemma 3n model server, Postgres/pgvector, sync worker). Use for any work under edge/.
+globs: edge/**
+alwaysApply: false
+---
+
+# Beacon Edge Server — full build spec
+
+You are building the **ship-side edge server**. It runs on a GPU mini-PC on board (for the demo: a laptop). It serves the crew Android app and the Master's dashboard over the ship LAN and must work with **no internet**. Read `00-beacon-shared.mdc` first.
+
+## 1. Services (docker-compose)
+
+`edge/docker-compose.yml` with four services on one internal network:
+
+| Service | Image / build | Port | Notes |
+|---|---|---|---|
+| `db` | `pgvector/pgvector:pg16` | 5432 (internal) | volume `pgdata` |
+| `model` | build `edge/model-server` | 8081 (internal) | Gemma 3n + faster-whisper + EmbeddingGemma; GPU if available (`deploy.resources.reservations.devices`), volume `models:/models` |
+| `api` | build `edge/` | **8080 → host 0.0.0.0:8080** | FastAPI; also serves `dashboards/ship-web/dist` at `/` |
+| `worker` | same image as `api` | — | `python -m app.workers.sync_worker` |
+
+Also provide:
+- `edge/Makefile`: `make fetch-models` (download all model weights into `./models` **before the voyage**; needs internet once), `make up`, `make seed`, `make test`, `make eval`.
+- A **no-Docker dev mode**: `uvicorn app.main:app --port 8080` with `MODEL_URL` pointing at a locally running model server, so people without Docker GPU setup can work.
+
+## 2. Config (`app/config.py`, pydantic-settings, env prefix `BEACON_`)
+
+```
+VESSEL_ID=VSL-DEMO01
+VESSEL_NAME="MV Demo Star"
+EDGE_PUBLIC_URL=http://192.168.1.10:8080     # goes into the pairing QR
+DATABASE_URL=postgresql+asyncpg://beacon:beacon@db:5432/beacon
+MODEL_URL=http://model:8081
+EDGE_SECRET=change-me                         # JWT signing
+MASTER_USERNAME=master   MASTER_PIN=1234
+SO_USERNAME=safety       SO_PIN=5678
+SHORE_URL=https://shore-api-xxxx.a.run.app
+SHORE_VESSEL_KEY=...                          # from shore admin
+SYNC_INTERVAL_S=60
+LINK_MODE=auto                                # auto | forced_down (demo switch)
+ASR_MODE=auto                                 # gemma | whisper | auto
+K_ANON=5
+DATA_DIR=/data                                # media, lexicon overrides
+SHIP_WEB_DIST=/app/ship-web                   # built dashboard
+CONTRACTS_DIR=/app/contracts
+```
+
+## 3. Code layout
+
+```
+edge/
+├── docker-compose.yml  Dockerfile  Makefile  pyproject.toml
+├── app/
+│   ├── main.py                 # app factory, routers, static ship-web, CORS off (same origin)
+│   ├── config.py
+│   ├── logging.py              # JSON logs, NEVER bodies or user text
+│   ├── contracts.py            # loads JSON schemas + enums + prompts from CONTRACTS_DIR
+│   ├── auth/
+│   │   ├── tokens.py           # JWT issue/verify (PyJWT, HS256)
+│   │   ├── pairing.py          # join codes, QR payload
+│   │   ├── staff.py            # PIN login (argon2 hashes, seeded from env)
+│   │   └── deps.py             # current_device, require_role("master","safety_officer")
+│   ├── api/
+│   │   ├── health.py
+│   │   ├── auth.py             # /auth/pair, /auth/login, /me
+│   │   ├── crew_near_miss.py
+│   │   ├── crew_checkin.py
+│   │   ├── crew_misc.py        # history, notices, help
+│   │   ├── ship.py             # master / safety officer
+│   │   ├── sync.py
+│   │   └── ai_debug.py         # /ai/* test endpoints, staff-only
+│   ├── ai/
+│   │   ├── llm.py              # model-server client: generate(), embed(), transcribe()
+│   │   ├── asr.py
+│   │   ├── vision.py
+│   │   ├── extract.py
+│   │   ├── checkin.py
+│   │   ├── translate.py
+│   │   ├── brief.py
+│   │   ├── rag.py
+│   │   ├── jsonutil.py         # robust JSON extraction from model text
+│   │   └── rails.py            # wraps contracts/safety/rails.py, hot-reload lexicon
+│   ├── db/
+│   │   ├── base.py  session.py
+│   │   ├── models.py
+│   │   └── migrations/         # Alembic
+│   ├── services/
+│   │   ├── near_miss_service.py
+│   │   ├── wellbeing_service.py   # k-anonymity lives ONLY here
+│   │   ├── notice_service.py
+│   │   ├── outbox_service.py
+│   │   └── idempotency.py
+│   ├── workers/sync_worker.py
+│   └── seed.py
+├── model-server/
+│   ├── Dockerfile  server.py  fetch_models.py  requirements.txt
+└── tests/
+```
+
+## 4. Database (SQLAlchemy 2 async + Alembic, Postgres 16 + pgvector)
+
+| Table | Key columns |
+|---|---|
+| `devices` | `id` uuid, `reporter_ref` (unique, `anon-` + 16 hex), `rank_group`, `language`, `device_label`, `paired_at`, `last_seen_at`, `revoked` bool |
+| `staff_users` | `id`, `username`, `pin_hash`, `role` (`master`/`safety_officer`) |
+| `pairing_codes` | `code` (format `XXXX-XXXX`, no ambiguous chars), `created_at`, `expires_at` (24 h), `active` |
+| `near_misses` | `record_id` uuid PK, `client_id` unique, `reporter_ref`, `rank_group`, `created_at`, `occurred_at`, `source`, `original_language`, `original_text`, `english_text`, `area`, `area_detail`, `hazard_type`, `ism_report_type`, `severity_level`, `potential_consequence`, `recurring`, `description`, `needs_clarification`, `clarifying_question` jsonb, `extraction` jsonb, `state` (`draft`/`confirmed`/`discarded`), `status` (`open`/`action_assigned`/`closed`), `action_text_en`, `action_owner_rank`, `action_due`, `synced_to_shore` bool, `embedding vector(768)` |
+| `near_miss_media` | `media_id`, `record_id`, `kind` (`photo`), `path`, `uploaded_to_shore` bool |
+| `near_miss_clarifications` | `id`, `record_id`, `question` jsonb, `answer_text`, `created_at` |
+| `checkin_scores` | `checkin_id`, `reporter_ref`, `rank_group`, `date`, `created_at`, `language`, `mood`, `fatigue`, `workload`, `sleep_hours_reported`, `social_connection`, `themes` text[], `source` (`ai`/`quick`), `rail_triggered`, `rail_category` — **no text columns** |
+| `help_requests` | `escalation_id`, `reporter_ref`, `category`, `consent_to_contact`, `contact_channel`, `created_at`, `context_summary` (null unless consented) |
+| `notices` | `notice_id`, `created_by_role`, `title_en`, `body_en`, `priority`, `created_at`, `source` (`ship`/`shore`) |
+| `notice_translations` | `notice_id`, `lang`, `title`, `body` |
+| `notice_acks` | `notice_id`, `reporter_ref`, `acked_at` |
+| `fleet_alerts` | `alert_id`, `cluster_id`, `title`, `body_en`, `severity`, `linked_cases` jsonb, `received_at`, `read_at` |
+| `briefs` | `brief_date`, `source` (`edge`/`shore_enriched`), `payload` jsonb (master_brief schema), `created_at` |
+| `outbox` | `seq` bigserial, `kind` (`near_miss`/`checkin_signal`/`escalation`), `ref_id`, `payload` jsonb, `created_at`, `sent_delta_id`, `sent_at` |
+| `sync_state` | key/value: `updates_cursor`, `last_sync_at`, `last_link_ok_at`, `link_mode` |
+| `docs`, `doc_chunks` | SMS manual RAG: `doc_id`, `title`; `chunk_id`, `doc_id`, `page`, `text`, `embedding vector(768)` |
+| `translations_cache` | `sha256(src_text+tgt)`, `tgt_lang`, `text` |
+| `idempotency` | `client_id` PK, `route`, `response` jsonb, `created_at` |
+
+`make seed` creates staff users, the first pairing code, a few historical confirmed near-misses for `VSL-DEMO01` (not the crane one), ~30 historical check-in scores from 8 fake `reporter_ref`s (so wellbeing charts are above k=5), and indexes `edge/seed_docs/*.md` (write 2 short sample SMS procedures: "Enclosed space entry", "Hydraulic leak response") into the RAG tables.
+
+## 5. Model server (`edge/model-server`)
+
+A small FastAPI app that owns all models, so the API container stays light.
+
+- **Gemma 3n** (`google/gemma-3n-E4B-it`; `E2B` if the machine has < 12 GB GPU/RAM, env `GEMMA_MODEL`) via **Hugging Face `transformers`** (`AutoProcessor` + `AutoModelForImageTextToText`, bf16 on GPU), accepting **text, image and audio** in chat messages. Verify on day one that audio + image inputs work with the installed `transformers` version; if not, set `MODEL_BACKEND=ollama` (text-only `gemma3n`) and rely on faster-whisper for audio and skip vision (log a warning).
+- **faster-whisper** `small` (multilingual, int8 on CPU / float16 on GPU).
+- **EmbeddingGemma** `google/embeddinggemma-300m` via `sentence-transformers`, 768-dim, normalised.
+- `fetch_models.py` downloads all three into `/models` (HF token needed once; the Gemma licence must be accepted on Hugging Face).
+
+Endpoints:
+```
+GET  /health  → {"ready": true, "gemma": "gemma-3n-E4B-it", "backend": "transformers", "device": "cuda"}
+POST /generate
+  {"messages":[{"role":"system","content":[{"type":"text","text":"..."}]},
+               {"role":"user","content":[{"type":"text","text":"..."},
+                                         {"type":"image","b64":"..."},
+                                         {"type":"audio","b64":"...","format":"m4a"}]}],
+   "max_new_tokens":512, "temperature":0.2, "json": true}
+  → {"text":"...", "latency_ms": 2140, "input_tokens": 812, "output_tokens": 190}
+POST /transcribe {"b64":"...","format":"m4a","lang_hint":"hi"} → {"text":"...","lang":"hi","confidence":0.83}   # whisper
+POST /embed {"texts":["..."]} → {"vectors":[[...768...]]}
+```
+Decode m4a/AAC with `ffmpeg` to 16 kHz mono float32 for both Gemma audio and whisper. Serialise requests to the GPU with an `asyncio.Lock` (one generation at a time); `/health.ready=false` while loading.
+
+## 6. Auth
+
+- **Crew devices**: `POST /auth/pair` with an active join code → issue JWT `{sub: device_id, role: "crew", rr: reporter_ref, vid: vessel_id}`, no expiry for the hackathon (`# DECISION`). Revoked devices get 401 `invalid_token`.
+- **Staff**: `POST /auth/login {"username","pin"}` → JWT `{sub, role: "master"|"safety_officer"}`, 12 h expiry. 5 failed PINs → 5-minute lockout.
+- `GET /me` → `{"role":"...","vessel_id":"...","reporter_ref"?: "...", "username"?: "..."}`.
+- Dependencies: `current_device()` for `/crew/*`, `require_role("master","safety_officer")` for `/ship/*`, `/sync/*`, `/ai/*`.
+
+## 7. Crew API — implement EXACTLY `contracts/api/edge-crew-api.md`
+
+The Android app is being built against that file in parallel. **Match every path, field name, status code, error code and response shape.** If you must change something, change the contract file in the same commit and flag it in the PR description. Implementation notes:
+
+### `POST /crew/near-miss` (multipart)
+1. Idempotency by `client_id` (return the stored response with 409 `duplicate_client_id` on repeat).
+2. Save photos to `DATA_DIR/media/{record_id}/` after resize (max 1600 px) and EXIF strip (Pillow). Save audio to a temp file.
+3. If audio: `asr.transcribe()` → text + detected lang (delete temp audio after; keep only text).
+4. `rails.check_input(text)` → if fired: respond `status: "safety_hold"` with the fixed response, create no record, do not call the LLM.
+5. If photos: `vision.describe(photo)` → one-sentence English hazard description (added as context).
+6. `extract.near_miss(text, lang, photo_context)` → validated model-owned fields (see §9).
+7. Build `display` with `contracts/i18n/labels.json` (**create this file**: for every `area`, `hazard_type`, `severity.level` and `ism_report_type` enum value, labels in `en`, `hi`, `tl`; mark `"_review": "native speaker review needed"`), plus `summary_local` = `translate(description, "en", lang)`.
+8. Insert `near_misses` row with `state=draft`. Return the contract response.
+
+### `/clarify`
+Append the answer (transcribe if audio), re-run extraction with `original text + "\nClarification Q: …\nA: …"`. At most 2 clarifications; after that `needs_clarification=false`.
+
+### `/confirm`
+Apply `edits` (allow only `location.area`, `location.detail`, `hazard_type`, `severity.level`, `occurred_at`; validate enums), set `state=confirmed`, compute `embedding` (EmbeddingGemma on `english_text`), enqueue to `outbox` as a full `NearMissRecord` (validate against `near_miss.schema.json` before enqueue; fill `record_id`, `schema_version`, `vessel_id`, `reporter_ref`, timestamps, `source`, `extraction.model`).
+
+### `GET /crew/near-miss`
+Only the caller's own records (`reporter_ref`). `master_action_local` = translated `action_text_en` (cached).
+
+### Check-in (`/crew/checkin/*`)
+- Sessions live **in process memory only** (`dict[session_id] → Session`, TTL 15 min, max 4 turns). Never write turns to DB, logs or disk.
+- `turn`: transcribe audio if present (delete audio) → `rails.check_input` → if fired: return contract safety response, mark session `rail_triggered`, `done=true` → else `checkin.reply(history, lang)` → `rails.check_output(reply, user_text)` → return `user_text` + `reply`.
+- `finish`: scoring call (JSON) → validate against `checkin.schema.json` `scores` + `themes` → insert `checkin_scores` (no text) → enqueue `checkin_signal` (date only, no time) → if rail fired and `consent_to_contact=true`: insert `help_requests` + enqueue `escalation` → delete the session from memory.
+- `quick`: validate ranges 0–10, insert with `source=quick`, enqueue signal.
+
+### `GET /crew/history`, `/crew/notices`, `/notices/{id}/ack`, `POST /crew/help`
+As in the contract. Notices are returned in the device's language (`notice_translations`, falling back to English with `"translated": false`). `help` with `category=medical` also creates a ship-visible medical alert; other categories are shore-only.
+
+## 8. Ship API (`/api/v1/ship/*`, roles `master` | `safety_officer`)
+
+```
+GET  /ship/pairing-qr
+  → {"qr_payload":{"v":1,"edge":"http://192.168.1.10:8080","vessel_id":"VSL-DEMO01","vessel_name":"MV Demo Star","join_code":"7Q4K-9XPL"},
+     "join_code":"7Q4K-9XPL","expires_at":"…","paired_devices":14}
+POST /ship/pairing-qr/rotate → same shape, new code
+
+GET  /ship/overview
+  → {"vessel":{"id":"VSL-DEMO01","name":"MV Demo Star"},
+     "today":{"reports_24h":3,"open_hazards":7,"high_or_critical_open":2,"checkins_today":9,"crew_paired":14},
+     "wellbeing":{"k_ok":true,"n":9,"mood_avg":5.8,"fatigue_avg":6.9,"workload_avg":6.2,"trend":"declining"},
+     "link":{"shore_link":"down","link_mode":"auto","last_sync_at":"…","pending_items":5},
+     "fleet_alerts_unread":1,"medical_alerts_open":0,
+     "model":{"ready":true,"name":"gemma-3n-E4B-it"}}
+
+GET  /ship/near-misses?status=&area=&hazard_type=&severity=&from=&to=&limit=50&cursor=
+  → {"items":[{"record_id","created_at","area","area_detail","hazard_type","severity_level","ism_report_type",
+               "recurring","description","original_language","rank_group","has_photos","status",
+               "action_text_en","synced_to_shore","similar_onboard":2}], "next_cursor": null}
+     # only state=confirmed. NEVER return reporter_ref to staff.
+     # similar_onboard = count of confirmed records on this ship in 30 d with cosine similarity ≥ 0.8
+GET  /ship/near-misses/{id} → full record (+ original_text, english_text, clarifications, photos:[{"media_id","url":"/api/v1/ship/media/{media_id}"}], similar:[{record_id, description, created_at}])
+PATCH /ship/near-misses/{id} {"status":"action_assigned","action_text_en":"Replace hose on crane 1 luffing cylinder; fit drip tray","action_owner_rank":"bosun","action_due":"2026-10-18"} → updated record
+GET  /ship/media/{media_id} → image/jpeg
+
+GET  /ship/wellbeing/summary?days=14
+  → {"k_threshold":5,
+     "daily":[{"date":"2026-10-16","n":9,"mood_avg":5.8,"fatigue_avg":6.9,"workload_avg":6.2,"suppressed":false},
+              {"date":"2026-10-15","n":3,"mood_avg":null,"fatigue_avg":null,"workload_avg":null,"suppressed":true}],
+     "by_rank_group":[{"rank_group":"deck_rating","n":6,"mood_avg":5.1,"fatigue_avg":7.4,"workload_avg":6.8,"suppressed":false}],
+     "themes":[{"theme":"sleep","count":6}]}           # themes only over windows with n ≥ 5
+
+GET  /ship/brief/today → {"source":"edge"|"shore_enriched","brief":{…master_brief.schema.json…}}
+POST /ship/brief/regenerate → same
+
+GET  /ship/notices → {"items":[{"notice_id","title_en","body_en","priority","created_at","source","acks":7,"recipients":14,"languages":["hi","tl"]}]}
+POST /ship/notices {"title_en":"Caution near crane 1","body_en":"…","priority":"urgent"} → notice; translations generated in a background task for every language among paired devices
+
+GET  /ship/fleet-alerts → {"items":[{"alert_id","title","body_en","severity","linked_cases","received_at","read_at"}]}
+POST /ship/fleet-alerts/{id}/read
+GET  /ship/medical-alerts → {"items":[{"escalation_id","created_at","rank_group","status"}]}    # category=medical only
+POST /ship/medical-alerts/{id}/ack
+
+POST /ship/ask {"question":"What do we do before entering the ballast tank?","lang":"en"}
+  → {"answer":"…","citations":[{"doc_id","title":"Enclosed space entry","page":2,"chunk_id"}],"grounded":true}
+     # if top similarity < 0.55 → {"answer":"I couldn't find this in the ship's manuals.","citations":[],"grounded":false}
+POST /ship/docs (multipart file .pdf/.md/.txt, title) → indexes in background → {"doc_id","chunks":42}
+GET  /ship/docs
+```
+
+## 9. AI modules (`app/ai/`)
+
+- **`llm.py`**: async `httpx` client for the model server; `generate(messages, *, json=False, max_new_tokens=512, temperature=0.2, timeout=90)`, `embed(texts)`, `transcribe(b64, fmt, lang_hint)`. Retries once on connection errors. Raises `ModelNotReady` → API returns 503 `model_loading`.
+- **`jsonutil.py`**: extract the first JSON object from model output (strip ```json fences, trailing text), `json.loads`, return dict or raise.
+- **`asr.py`**: `ASR_MODE=auto`: try Gemma ("Transcribe this audio exactly in its original language. Output only the transcript.") → if empty or < 3 chars, use whisper. Return `(text, lang)`; detect `lang` from whisper or a Gemma one-word language-ID call.
+- **`vision.py`**: Gemma with the photo: "In one sentence, describe any safety hazard visible on this ship deck/engine room photo. If none, say 'No obvious hazard'." English output.
+- **`extract.py`**: build the prompt from `contracts/prompts/near_miss_extraction.md`, injecting enums **read from the schema** (`{AREAS}`, `{HAZARD_TYPES}`), `{LANG}`, `{TRANSCRIPT}` and the photo context. `json=True`, temperature 0.1. Validate the model-owned subset (`english_text, location, hazard_type, ism_report_type, severity, recurring, description, needs_clarification, clarifying_question, confidence`). On failure retry once with "Your JSON was invalid: {error}. Return corrected JSON only." Second failure → `extraction.status="needs_shore_structuring"`, set safe defaults (`area=unknown`, `hazard_type=other`, `severity.level=medium`), `needs_clarification=true` with a generic question. Record `attempts` and `confidence`.
+- **`checkin.py`**: system prompt from `contracts/prompts/checkin_system.md`; `reply(history, lang)`; `score(transcript, lang)` → JSON per the prompt's scoring section; clamp to 0–10; unknown themes dropped.
+- **`translate.py`**: `translate(text, src, tgt)`: Gemma, "Translate from {src} to {tgt}. Keep ship terms (crane, bosun, ballast) as commonly used by seafarers. Output only the translation."; cache in `translations_cache`.
+- **`brief.py`**: gather last-24 h aggregates (k-anon via `wellbeing_service`), open high/critical hazards, recurring items, unread fleet alerts → Gemma JSON matching `master_brief.schema.json` (`provenance.model` = Gemma id). Validate; on failure build a deterministic fallback brief from the numbers. If a `shore_enriched` brief exists for today and is newer, `/ship/brief/today` returns that.
+- **`rag.py`**: chunk docs ~800 chars with 100 overlap (pypdf for PDFs), embed with EmbeddingGemma, cosine top-5 via pgvector `<=>`, answer with Gemma using only the chunks, cite chunk ids, refuse when not grounded.
+- **`rails.py`**: import the logic from `contracts/safety/rails.py`; load `DATA_DIR/lexicon.json` if present (shore updates) else `contracts/safety/lexicon.json`; reload when the file changes.
+
+Run `contracts/eval/run_eval.py` against `extract.near_miss` (`make eval`) and print accuracy. Target: area ≥ 0.85, hazard_type ≥ 0.8.
+
+## 10. Sync worker (`app/workers/sync_worker.py`) and `/sync/*`
+
+Loop every `SYNC_INTERVAL_S`:
+1. If `link_mode == forced_down` → record link down, sleep.
+2. `POST {SHORE_URL}/api/v1/ingest/heartbeat` with header `X-Vessel-Key` (timeout 10 s). Failure → link down.
+3. Link up: read unsent `outbox` rows in `seq` order (max 200), build a `SyncDelta` (validate against `sync_delta.schema.json`; `checkin_signals` carry date only; `near_misses` are full records; `escalations` only with consent), gzip, `POST /ingest/delta` (`Content-Encoding: gzip`). On 200 mark rows sent with `delta_id` and set `near_misses.synced_to_shore=true`. Log the gzipped size (it goes on the dashboard as proof: "1.1 KB").
+4. Upload pending photos one by one: `POST /ingest/media` (multipart `record_id`, `media_id`, `file`); stop if a request takes > 30 s (bad link).
+5. `GET /ingest/updates?vessel_id=…&since={updates_cursor}` → store `fleet_alerts`, `briefs` (`source=shore_enriched`), shore `notices` (translate for crew), `lexicon` (write to `DATA_DIR/lexicon.json`), update the cursor.
+6. Update `sync_state` (`last_sync_at`, `last_link_ok_at`).
+
+The shore API contract is defined in `20-shore.mdc` §5 — match it.
+
+```
+GET  /sync/status → {"shore_link":"up"|"down","link_mode":"auto","last_sync_at":"…","last_link_ok_at":"…","pending":{"near_misses":2,"checkin_signals":5,"escalations":0,"photos":1},"last_delta_bytes_gz":1104}
+POST /sync/run    → triggers one cycle now (used by the dashboard "Sync now" button), returns /sync/status after it finishes (timeout 30 s)
+POST /sync/link {"mode":"auto"|"forced_down"} → demo switch "Simulate VSAT down"
+```
+Use a Postgres advisory lock so the API-triggered run and the worker loop never run concurrently.
+
+## 11. Static ship dashboard
+Mount `SHIP_WEB_DIST` with `StaticFiles(html=True)` at `/`, with an SPA fallback so unknown non-API paths return `index.html`. API stays under `/api/v1`.
+
+## 12. Tests (`pytest`, `httpx.AsyncClient`, a Postgres test DB or testcontainers)
+- Contract tests: every example JSON in `contracts/api/edge-crew-api.md` round-trips through our Pydantic response models.
+- A `FakeModelServer` (respx) returning canned Gemma outputs, so tests run without GPU: near-miss happy path, invalid JSON → retry → fallback, safety hold (text `I want to die` → no LLM call made), clarify, confirm → outbox row valid against schema.
+- Check-in: after `finish`, assert there is no transcript text in any table (scan all text columns for the user's words).
+- k-anonymity: 4 reporters → suppressed; 5 → visible.
+- Sync worker against a respx-mocked shore: delta valid, idempotent re-send, cursor advances, `forced_down` sends nothing.
+- Staff never receive `reporter_ref` from `/ship/*`.
+
+## 13. Build order (each milestone runs and is demoable)
+1. ⭐ **E1** Skeleton: compose (db + api), config, health, Alembic, seed, staff login, pairing + QR payload, `/me`.
+2. ⭐ **E2** Model server: Gemma 3n `/generate` with text+image+audio, whisper `/transcribe`, `/embed`, `fetch_models.py`. Prove a Hindi m4a and a JPEG work.
+3. ⭐ **E3** Crew near-miss: submit → asr → rails → vision → extract → display labels → clarify → confirm → outbox. Run `make eval`.
+4. ⭐ **E4** Ship API: overview, near-misses list/detail/patch, media, brief (edge), pairing QR.
+5. ⭐ **E5** Sync worker + `/sync/*` against the shore API (or a mock until shore is deployed).
+6. **E6** Check-in (sessions in memory, scoring, quick), history, notices + translation, help/medical alerts, wellbeing summary with k-anon.
+7. **E7** RAG `/ship/ask` + docs upload, fleet alerts, polish, tests green.
+
+## 14. Demo checklist (must pass)
+- Laptop Wi-Fi hotspot or router, no internet; phone in airplane mode + Wi-Fi.
+- Hindi voice + photo near-miss → draft in ≤ 40 s on the demo laptop.
+- Ship dashboard shows it within 5 s of confirm.
+- `POST /sync/link forced_down` → dashboard shows "VSAT down", pending count rises; switch to `auto` → sync completes, dashboard shows "Synced 1.1 KB", and within one more cycle the shore fleet alert for the crane cluster appears on the ship dashboard.

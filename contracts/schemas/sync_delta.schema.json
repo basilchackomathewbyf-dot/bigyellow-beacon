@@ -1,0 +1,64 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://bigyellowfish.ai/beacon/sync_delta.schema.json",
+  "title": "SyncDelta",
+  "description": "What leaves the device when a link appears. Same contract for Cloud Run or an on-board edge node. Gzipped JSON; target < 20 KB per daily delta.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["delta_id", "schema_version", "device_ref", "vessel_id", "seq_from", "seq_to", "created_at", "near_misses", "checkin_signals", "escalations"],
+  "properties": {
+    "delta_id": { "type": "string", "format": "uuid" },
+    "schema_version": { "const": "1.0" },
+    "device_ref": { "type": "string", "description": "Rotating device token, not hardware ID." },
+    "vessel_id": { "type": "string", "pattern": "^VSL-[A-Z0-9]{3,12}$" },
+    "seq_from": { "type": "integer", "minimum": 0 },
+    "seq_to": { "type": "integer", "minimum": 0 },
+    "created_at": { "type": "string", "format": "date-time" },
+    "near_misses": {
+      "type": "array",
+      "description": "Full NearMissRecord objects (see near_miss.schema.json). Photos excluded; photo_refs uploaded separately on good links.",
+      "items": { "$ref": "near_miss.schema.json" }
+    },
+    "checkin_signals": {
+      "type": "array",
+      "description": "Scores only. No transcript, no free text. BigQuery aggregates these and suppresses any group with fewer than 5 distinct reporter_ref.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["checkin_id", "reporter_ref", "rank_group", "date", "mood", "fatigue", "workload"],
+        "properties": {
+          "checkin_id": { "type": "string", "format": "uuid" },
+          "reporter_ref": { "type": "string" },
+          "rank_group": { "type": "string" },
+          "date": { "type": "string", "format": "date", "description": "Day only, no time, to reduce re-identification." },
+          "mood": { "type": "number", "minimum": 0, "maximum": 10 },
+          "fatigue": { "type": "number", "minimum": 0, "maximum": 10 },
+          "workload": { "type": "number", "minimum": 0, "maximum": 10 },
+          "themes": { "type": "array", "items": { "type": "string" }, "maxItems": 5 }
+        }
+      }
+    },
+    "escalations": {
+      "type": "array",
+      "description": "Sent with priority, ahead of everything else. Only created when the crew member consented to contact, or the rail category requires it under the clinical protocol.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["escalation_id", "checkin_id", "rail_category", "consent_to_contact", "created_at"],
+        "properties": {
+          "escalation_id": { "type": "string", "format": "uuid" },
+          "checkin_id": { "type": "string", "format": "uuid" },
+          "rail_category": { "type": "string", "enum": ["crisis", "harm_to_others", "medical_emergency"] },
+          "consent_to_contact": { "type": "boolean" },
+          "contact_channel": { "type": ["string", "null"], "enum": ["in_app_chat", "satellite_call", "via_master", null] },
+          "context_summary": {
+            "type": ["string", "null"],
+            "maxLength": 300,
+            "description": "Short, consented summary for the psychology team. Never the raw transcript."
+          },
+          "created_at": { "type": "string", "format": "date-time" }
+        }
+      }
+    }
+  }
+}

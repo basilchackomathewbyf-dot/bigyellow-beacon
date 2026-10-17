@@ -1,0 +1,36 @@
+{
+  "version": "0.1-placeholder",
+  "_note": "PLACEHOLDER lexicon written by the dev team for the hackathon prototype. Seed set only, intentionally small. Must be expanded and approved by BYF's psychology team, with native speakers per language, before real use. Fixed responses below are NOT clinician-approved.",
+  "rules": [
+    { "id": "crisis_en_01", "category": "crisis", "pattern": "\\b(kill|hurt|harm)\\s+my\\s?self\\b" },
+    { "id": "crisis_en_02", "category": "crisis", "pattern": "\\b(want|wanted|going)\\s+to\\s+die\\b" },
+    { "id": "crisis_en_03", "category": "crisis", "pattern": "\\bend\\s+(my|it)\\s+(life|all)\\b" },
+    { "id": "crisis_en_04", "category": "crisis", "pattern": "\\bsuicid" },
+    { "id": "crisis_en_05", "category": "crisis", "pattern": "\\bno\\s+reason\\s+to\\s+live\\b" },
+    { "id": "crisis_en_06", "category": "crisis", "pattern": "\\bjump\\s+(over\\s?board|into\\s+the\\s+sea)\\b" },
+    { "id": "crisis_hi_01", "category": "crisis", "pattern": "(मरना\\s+चाहता|मरना\\s+चाहती|जीना\\s+नहीं\\s+चाहता|जीना\\s+नहीं\\s+चाहती|आत्महत्या)" },
+    { "id": "crisis_hi_rom_01", "category": "crisis", "pattern": "\\b(marna\\s+chahta|marna\\s+chahti|jeena\\s+nahi\\s+chahta|aatmahatya|khudkushi)\\b" },
+    { "id": "crisis_tl_01", "category": "crisis", "pattern": "\\b(magpakamatay|gusto\\s+ko\\s+nang\\s+mamatay)\\b" },
+    { "id": "harm_en_01", "category": "harm_to_others", "pattern": "\\b(kill|stab|hurt)\\s+(him|her|them|the\\s+(bosun|chief|captain|master|officer))\\b" },
+    { "id": "med_en_01", "category": "medical_emergency", "pattern": "\\b(chest\\s+pain|can'?t\\s+breathe|unconscious|bleeding\\s+(a\\s+lot|heavily))\\b" },
+    { "id": "med_hi_01", "category": "medical_emergency", "pattern": "(सीने\\s+में\\s+दर्द|सांस\\s+नहीं|बेहोश)" }
+  ],
+  "model_output_blocklist": [
+    { "id": "out_diagnosis", "pattern": "\\byou\\s+(have|are\\s+suffering\\s+from)\\s+(depression|anxiety|ptsd|bipolar)" },
+    { "id": "out_method", "pattern": "\\b(overdose|how\\s+many\\s+pills|method)\\b" },
+    { "id": "out_dismiss", "pattern": "\\b(just\\s+get\\s+over\\s+it|it'?s\\s+not\\s+a\\s+big\\s+deal)\\b" }
+  ],
+  "fixed_responses": {
+    "crisis": {
+      "en": "[PLACEHOLDER – pending clinician review] Thank you for telling me. You don't have to deal with this alone. I've flagged this so a trained person from our support team can reach you, privately. If you are in danger right now, please tell the officer on watch or the Master. Can our team contact you?",
+      "hi": "[PLACEHOLDER – clinician review pending] बताने के लिए धन्यवाद। आपको यह अकेले नहीं झेलना है। हमारी सहायता टीम का एक प्रशिक्षित व्यक्ति आपसे निजी तौर पर संपर्क कर सके, इसके लिए मैंने इसे फ़्लैग किया है। अगर आप अभी खतरे में हैं, तो कृपया ड्यूटी ऑफ़िसर या मास्टर को बताएं। क्या हमारी टीम आपसे संपर्क कर सकती है?"
+    },
+    "harm_to_others": {
+      "en": "[PLACEHOLDER – pending clinician review] It sounds like things are very tense right now. I've flagged this so someone from our support team can talk with you. If anyone is in immediate danger, please inform the Master or officer on watch now."
+    },
+    "medical_emergency": {
+      "en": "[PLACEHOLDER] This may be a medical emergency. Please alert the officer on watch or the ship's medical officer immediately.",
+      "hi": "[PLACEHOLDER] यह मेडिकल इमरजेंसी हो सकती है। कृपया तुरंत ड्यूटी ऑफ़िसर या जहाज़ के मेडिकल ऑफ़िसर को सूचित करें।"
+    }
+  }
+}

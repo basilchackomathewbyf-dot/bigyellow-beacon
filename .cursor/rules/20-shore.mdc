@@ -1,0 +1,267 @@
+---
+description: Beacon SHORE API spec (Cloud Run FastAPI, Firestore + vector search, Gemini on Vertex AI, Cloud Storage, Firebase Auth). Use for any work under shore/.
+globs: shore/**
+alwaysApply: false
+---
+
+# Beacon Shore API — full build spec
+
+You are building the **shore backend** on Google Cloud. It receives sync deltas from ships' edge servers, finds fleet-wide hazard patterns with **Gemini** and **Firestore vector search**, links them to past accident cases, generates enriched briefs and reports, and serves the shore dashboard. Read `00-beacon-shared.mdc` first.
+
+Note: the original plan said Cloud SQL; the team decided on **Firestore** for shore. Edge stays on Postgres.
+
+## 1. Stack
+- Python 3.12, FastAPI, Pydantic v2, uvicorn, deployed on **Cloud Run** (`shore-api`, region `asia-south1`)
+- **Firestore** (Native mode, `(default)` database) via `google-cloud-firestore` **AsyncClient**, with **vector search** (`find_nearest`, COSINE)
+- **Gemini on Vertex AI** via the `google-genai` SDK (`genai.Client(vertexai=True, project=…, location=…)`), structured output (`response_mime_type="application/json"` + `response_schema`) and function calling
+- Embeddings: `gemini-embedding-001` with `output_dimensionality=768` (env `EMBED_MODEL`). Shore vectors are **never mixed** with edge EmbeddingGemma vectors; shore re-embeds everything it stores.
+- **Cloud Storage** bucket `byf-beacon-2026-media` for photos (signed URLs, 15 min)
+- **firebase-admin** to verify Firebase Auth ID tokens and read custom claims (`role`)
+- `jsonschema` to validate deltas against `contracts/schemas`
+
+## 2. Config (env, pydantic-settings, prefix `SHORE_`)
+```
+GCP_PROJECT=byf-beacon-2026
+FIRESTORE_DB=(default)
+GEMINI_MODEL=gemini-2.5-flash        # check the current model list in Vertex AI Model Garden and use the newest GA Flash; keep configurable
+GEMINI_PRO_MODEL=gemini-2.5-pro      # monthly report only
+VERTEX_LOCATION=us-central1
+EMBED_MODEL=gemini-embedding-001
+MEDIA_BUCKET=byf-beacon-2026-media
+CORS_ORIGINS=https://byf-beacon-2026.web.app,http://localhost:5174
+K_ANON=5
+CLUSTER_WINDOW_DAYS=30
+CLUSTER_MIN_REPORTS=3
+CLUSTER_MIN_VESSELS=2
+CLUSTER_MAX_DISTANCE=0.25            # cosine distance; tune with the seed data
+CASE_MAX_DISTANCE=0.35
+CONTRACTS_DIR=/app/contracts
+```
+
+## 3. Code layout
+```
+shore/
+├── Dockerfile  pyproject.toml  Makefile
+├── app/
+│   ├── main.py  config.py  logging.py  contracts.py
+│   ├── auth/
+│   │   ├── vessel_key.py     # X-Vessel-Key → vessel (sha256 hash lookup)
+│   │   └── firebase.py       # Bearer ID token → user + role claim; require_role(...)
+│   ├── api/
+│   │   ├── health.py  ingest.py  fleet.py  clusters.py  alerts.py
+│   │   ├── wellbeing.py  reports.py  ask.py  escalations.py  corpus.py  admin.py
+│   ├── ai/
+│   │   ├── gemini.py         # client, generate_json(schema), embed(), with retries + timeouts
+│   │   ├── cluster.py        # deterministic clustering (+ Gemini explanation)
+│   │   ├── rag.py            # accident-corpus retrieval
+│   │   ├── brief.py          # enriched master brief → sent down to the ship
+│   │   ├── report.py         # monthly fleet report
+│   │   ├── ask.py            # NL analytics with function calling over safe tools
+│   │   └── structure_case.py # raw accident report text → case schema
+│   ├── db/
+│   │   ├── firestore.py      # AsyncClient singleton
+│   │   └── repos.py          # one repo class per collection (interface + Firestore impl + InMemory impl for tests)
+│   ├── services/
+│   │   ├── ingest_service.py
+│   │   ├── wellbeing_service.py   # k-anonymity lives ONLY here
+│   │   └── updates_service.py     # builds /ingest/updates payloads
+│   └── scripts/
+│       ├── create_vessel.py  set_role.py  seed_demo.py  load_corpus.py  create_indexes.sh
+└── tests/
+```
+
+## 4. Firestore data model
+```
+fleets/{fleet_id}                       name
+vessels/{vessel_id}                     name, fleet_id, api_key_hash, created_at, last_heartbeat_at, last_sync_at, edge_version, pending_items
+near_misses/{record_id}                 full NearMissRecord + vessel_id, fleet_id, received_at, photos:[{media_id, gcs_path}],
+                                        cluster_id|null, embedding: Vector(768)  (embed "hazard_type | area | english_text")
+checkin_daily/{vessel_id}_{date}_{rank_group}
+                                        vessel_id, date, rank_group, n, reporter_refs_hashed:[...], sums:{mood,fatigue,workload}, theme_counts:{...}
+                                        (raw signals are NOT kept; aggregate on ingest; distinct count via the hashed ref set)
+clusters/{cluster_id}                   title, hazard_type, area, member_ids:[record_id], vessel_ids:[...], count, first_seen, last_seen,
+                                        risk: low|medium|high|critical, linked_cases:[case_id], explanation:{…}|null, explanation_for_count, status: active|closed
+accident_cases/{case_id}                case_id, vessel_type, area, hazard_type, outcome, precursors:[...], summary, source, _synthetic, embedding: Vector(768)
+fleet_alerts/{alert_id}                 vessel_id, cluster_id|null, title, body_en, severity, linked_cases, created_at, created_by
+briefs/{vessel_id}_{date}               master_brief payload, source:"shore_enriched", created_at
+notices_shore/{notice_id}               vessel_ids|"all", title_en, body_en, priority, created_at
+escalations/{escalation_id}             vessel_id, checkin_id, rail_category, consent_to_contact, contact_channel, context_summary, created_at,
+                                        status: new|contacted|resolved, notes:[{by, at, text}]
+reports/{fleet_id}_{yyyy-mm}            generated monthly report
+sync_log/{delta_id}                     vessel_id, received_at, counts, bytes_gz
+config/lexicon                          version, json (safety lexicon pushed to ships)
+```
+`scripts/create_indexes.sh` creates the vector indexes (and any composite indexes the queries need):
+```
+gcloud firestore indexes composite create --project=byf-beacon-2026 --collection-group=near_misses \
+  --query-scope=COLLECTION --field-config=field-path=embedding,vector-config='{"dimension":"768","flat":"{}"}'
+gcloud firestore indexes composite create --project=byf-beacon-2026 --collection-group=accident_cases \
+  --query-scope=COLLECTION --field-config=field-path=embedding,vector-config='{"dimension":"768","flat":"{}"}'
+```
+For the hackathon, do `find_nearest` without pre-filters and filter by time window / hazard in Python (avoids composite vector indexes). `# DECISION:` comment.
+
+## 5. Ingest API (edge ↔ shore) — the edge sync worker is built against this
+
+All require header `X-Vessel-Key: <key>`; the vessel is resolved from the key, and a body `vessel_id` that doesn't match → 403.
+
+```
+POST /api/v1/ingest/heartbeat
+  {"vessel_id":"VSL-DEMO01","edge_version":"0.1.0","pending_items":5,"sent_at":"…"}
+  → {"server_time":"…","updates_available":true}
+
+POST /api/v1/ingest/delta          (accept Content-Encoding: gzip; max 2 MB decompressed)
+  body = SyncDelta (contracts/schemas/sync_delta.schema.json)
+  → {"delta_id":"…","accepted":{"near_misses":1,"checkin_signals":3,"escalations":0},
+     "duplicate":false,"clusters_touched":["cl_…"],"alerts_created":2}
+  # repeat delta_id → 200 with "duplicate": true and the original counts (no double counting)
+
+POST /api/v1/ingest/media          multipart: record_id, media_id, file (image/jpeg ≤ 5 MB)
+  → {"media_id":"…","stored":true}
+
+GET  /api/v1/ingest/updates?vessel_id=VSL-DEMO01&since=2026-10-17T05:00:00Z
+  → {"cursor":"2026-10-17T06:02:11Z",
+     "fleet_alerts":[{"alert_id","cluster_id","title","body_en","severity","linked_cases":["SYN-ACC-001"],"created_at"}],
+     "briefs":[{"brief_date":"2026-10-17","brief":{…master_brief…}}],
+     "notices":[{"notice_id","title_en","body_en","priority","created_at"}],
+     "lexicon":{"version":"0.1-placeholder","json":{…}} | null}
+  # cursor = max created_at of everything returned (or `since` if nothing new)
+```
+
+### Ingest processing (`ingest_service.py`)
+1. Validate the delta against the schema (400 `invalid_delta` with the first error path). Check `sync_log` for `delta_id` (idempotency).
+2. **Near-misses**: upsert by `record_id` with `vessel_id`, `fleet_id`, `received_at`; embed; write. Records with `extraction.status = needs_shore_structuring` → re-extract with Gemini using `contracts/prompts/near_miss_extraction.md` (structured output against the model-owned subset) before embedding; set `extraction.model` to the Gemini id.
+3. **Check-in signals**: for each signal, transactionally update `checkin_daily/{vessel}_{date}_{rank_group}` (n += 1 only if the sha256(reporter_ref) is new for that doc; add to sums; theme counts). Never store the raw signal.
+4. **Escalations**: write to `escalations` with `status=new` (only those with `consent_to_contact=true` or category `medical_emergency`).
+5. Write `sync_log`, update `vessels/{id}.last_sync_at`.
+6. For each new near-miss run **clustering** (§6) and then **brief enrichment** (§7) for the sending vessel. Keep the request < 20 s; if Gemini is slow, return 200 and finish explanation/brief in a background task (`asyncio.create_task` is acceptable on Cloud Run with `--no-cpu-throttling`; `# DECISION:`).
+
+## 6. Clustering (`ai/cluster.py`) — deterministic first, Gemini only explains
+For new record `N`:
+1. `find_nearest(near_misses.embedding, N.embedding, COSINE, limit=15)`; keep candidates with distance ≤ `CLUSTER_MAX_DISTANCE`, `received_at` within `CLUSTER_WINDOW_DAYS`, and the **same `hazard_type` or same `area`**, excluding `N`.
+2. If any candidate has `cluster_id` → join that cluster (add `N`; update `count`, `vessel_ids`, `last_seen`).
+3. Else if `1 + len(candidates) ≥ CLUSTER_MIN_REPORTS` **and** distinct vessels ≥ `CLUSTER_MIN_VESSELS` → create a cluster with all of them.
+4. `risk` = max severity among members, raised one level if `recurring` appears in ≥ 2 members or a linked case outcome is `fatality`/`serious_injury` (cap `critical`).
+5. **Linked cases**: `find_nearest(accident_cases.embedding, centroid, limit=3)` with distance ≤ `CASE_MAX_DISTANCE`.
+6. **Explanation** (Gemini, structured output), regenerated only when `count` changed since `explanation_for_count`:
+   ```json
+   {"title":"Recurring crane hydraulic leaks causing slips",
+    "summary":"3 reports from 3 vessels in 7 days describe hydraulic oil on deck near crane pedestals…",
+    "why_it_matters":"Matches SYN-ACC-001, where an uncontained leak led to a fractured wrist.",
+    "precursor_overlap":["recurring hydraulic oil leak at crane pedestal","no drip tray"],
+    "recommended_actions":["Inspect crane hydraulic hoses fleet-wide within 48 h","Fit drip trays at all crane pedestals"],
+    "citations":["6f1d…e01","6f1d…e02","6f1d…e03","SYN-ACC-001"]}
+   ```
+   Prompt rules: use only the provided records and cases; every claim must cite record ids or case ids; never mention crew identity; validate that every citation exists, else drop the claim.
+7. **Alerts**: when a cluster is created, or its risk goes up, create one `fleet_alerts` doc for each vessel in the cluster **and** each other vessel in the same fleet (title from the explanation, `body_en` = summary + top recommended action).
+
+Seed data must produce exactly one cluster (crane, 3 vessels) when the live `VSL-DEMO01` report arrives. Add a test for this with the in-memory repo and a deterministic fake embedder.
+
+## 7. Enriched brief (`ai/brief.py`)
+After each delta from vessel V: inputs = V's last-7-day near-misses, open high/critical, clusters touching V (with explanations and linked cases), V's wellbeing aggregates (k-anon), unread alerts → Gemini structured output matching `master_brief.schema.json` (`provenance.model` = Gemini id, `provenance.inputs` = ids used) → `briefs/{V}_{today}`. `recommended_action.evidence_refs` must be real ids. Delivered via `/ingest/updates`.
+
+## 8. Dashboard API (Bearer Firebase ID token; roles from custom claim `role`)
+
+| Method | Path | Roles |
+|---|---|---|
+| GET | `/api/v1/me` → `{"uid","email","role"}` | any signed-in |
+| GET | `/fleet/overview` | shore_safety, admin |
+| GET | `/fleet/vessels/{vessel_id}` | shore_safety, admin |
+| GET | `/fleet/near-misses?vessel_id=&hazard_type=&area=&severity=&from=&to=&limit=50&cursor=` | shore_safety, admin |
+| GET | `/fleet/near-misses/{record_id}` | shore_safety, admin |
+| GET | `/fleet/clusters?status=active` | shore_safety, admin |
+| GET | `/fleet/clusters/{cluster_id}` | shore_safety, admin |
+| POST | `/fleet/clusters/{cluster_id}/alert` | shore_safety, admin |
+| POST | `/fleet/alerts` | shore_safety, admin |
+| GET | `/fleet/alerts?vessel_id=` | shore_safety, admin |
+| POST | `/fleet/notices` | shore_safety, admin |
+| GET | `/fleet/wellbeing?days=30` | shore_safety, shore_psych, admin |
+| GET | `/fleet/reports/monthly?month=2026-10` / POST `…/regenerate` | shore_safety, admin |
+| POST | `/fleet/ask` | shore_safety, admin |
+| GET | `/escalations?status=new` / PATCH `/escalations/{id}` | **shore_psych only** (admin cannot read) |
+| GET | `/corpus/search?q=&limit=10` / POST `/corpus/cases` | shore_safety, admin |
+| POST | `/admin/vessels` | admin |
+
+Response shapes:
+```
+GET /fleet/overview
+→ {"totals":{"vessels":3,"online":2,"near_misses_7d":11,"high_open":3,"active_clusters":1},
+   "vessels":[{"vessel_id":"VSL-DEMO01","name":"MV Demo Star","fleet_id":"FLEET-BYF-DEMO",
+               "online":true,"last_sync_at":"…","near_misses_7d":4,"high_open":1,"active_clusters":1,
+               "wellbeing":{"suppressed":false,"n":9,"mood_avg":5.8,"fatigue_avg":6.9,"trend":"declining"}}],
+   "top_cluster":{"cluster_id","title","risk","vessel_count":3} | null}
+   # online = last_heartbeat_at within 2 h
+
+GET /fleet/vessels/{id}
+→ {"vessel":{…}, "recent_near_misses":[…10…], "wellbeing_daily":[{"date","n","mood_avg","fatigue_avg","workload_avg","suppressed"}],
+   "clusters":[…], "alerts":[…], "sync_log":[{"delta_id","received_at","bytes_gz","counts"}]}
+
+GET /fleet/near-misses/{id} → record (without reporter_ref) + "photos":[{"media_id","url":"<signed>"}] + "cluster": {…}|null
+
+GET /fleet/clusters/{id}
+→ {"cluster":{…}, "members":[{"record_id","vessel_id","vessel_name","created_at","description","original_language","original_text","english_text","severity_level","recurring"}],
+   "linked_cases":[{"case_id","outcome","summary","precursors","_synthetic"}], "explanation":{…§6…}, "alerts_sent":[{"vessel_id","created_at"}]}
+
+POST /fleet/clusters/{id}/alert {"vessel_ids":["VSL-SISTER01"]|null, "note_en":"optional extra text"} → {"created":3}
+POST /fleet/alerts {"vessel_ids":["…"]|"all","title","body_en","severity"} → {"created":n}
+POST /fleet/notices {"vessel_ids":[…]|"all","title_en","body_en","priority"} → {"notice_id"}
+
+GET /fleet/wellbeing?days=30
+→ {"k_threshold":5,"vessels":[{"vessel_id","name","weekly":[{"week":"2026-W41","n":31,"mood_avg":6.1,"fatigue_avg":6.4,"workload_avg":6.0,"suppressed":false}]}]}
+
+GET /fleet/reports/monthly?month=2026-10
+→ {"month","fleet_id","generated_at","model","headline","sections":[{"title","body_md","citations":[…]}],
+   "top_risks":[{"title","cluster_id"}],"recommended_actions":[…],"data":{"near_misses":42,"by_hazard":{…},"by_vessel":{…}}}
+   # numbers in "data" computed in code; Gemini writes prose from them (GEMINI_PRO_MODEL)
+
+POST /fleet/ask {"question":"Which vessels have rising fatigue this month?"}
+→ {"answer":"…","tool_calls":[{"name":"get_wellbeing_aggregates","args":{…}}],"data_refs":[…]}
+   # Gemini function calling over ONLY these tools: get_fleet_overview, get_near_miss_counts(group_by, filters),
+   # get_wellbeing_aggregates(vessel_id?, days) [k-anon enforced], get_clusters(status), search_near_misses(text, limit)
+   # escalations are never reachable from /fleet/ask
+
+GET /escalations?status=new
+→ {"items":[{"escalation_id","vessel_id","vessel_name","rail_category","consent_to_contact","contact_channel","context_summary","created_at","status","notes"}]}
+PATCH /escalations/{id} {"status":"contacted","note":"Called via satellite, follow-up in 48 h"} → item
+
+GET /corpus/search?q=crane hydraulic → {"items":[{"case_id","outcome","summary","distance"}]}
+POST /corpus/cases  JSON list of cases, or {"raw_text": "...", "source": "..."} → structured with Gemini (structure_case.py) → {"created":["…"]}
+
+POST /admin/vessels {"vessel_id":"VSL-DEMO01","name":"MV Demo Star","fleet_id":"FLEET-BYF-DEMO"} → {"vessel_id","api_key":"bk_…"}   # shown once
+```
+Never return `reporter_ref`, or `reporter_refs_hashed`, from any dashboard endpoint.
+
+## 9. Auth details
+- Vessel keys: `bk_` + 32 random urlsafe chars; store `sha256` only.
+- Dashboard: verify `Authorization: Bearer <Firebase ID token>` with `firebase_admin.auth.verify_id_token`; `role` from custom claims. `scripts/set_role.py <email> <role>` sets claims. Missing role → 403.
+- CORS: only `CORS_ORIGINS`.
+
+## 10. Scripts
+- `create_vessel.py` (calls the same service as `/admin/vessels`, prints the key)
+- `seed_demo.py`: fleet `FLEET-BYF-DEMO`, vessels `VSL-DEMO01`, `VSL-SISTER01`, `VSL-SISTER02`; load the **two sister-vessel records** from `contracts/seed/demo_near_misses.json` (skip the record with `_demo_note`; it arrives live from the ship), backdate `received_at` to 7 and 4 days ago; create ~6 weeks of `checkin_daily` aggregates for all three vessels (n ≥ 5 on most days, a few days with n < 5 to show suppression); print vessel keys.
+- `load_corpus.py`: load `contracts/seed/accident_corpus_sample.jsonl`, embed, write. Accepts a path to the real corpus later.
+- `create_indexes.sh`, and a `Makefile` target `make deploy`:
+```
+gcloud services enable run.googleapis.com firestore.googleapis.com aiplatform.googleapis.com storage.googleapis.com cloudbuild.googleapis.com artifactregistry.googleapis.com firebase.googleapis.com --project byf-beacon-2026
+gcloud run deploy shore-api --source . --region asia-south1 --project byf-beacon-2026 \
+  --service-account shore-api@byf-beacon-2026.iam.gserviceaccount.com \
+  --allow-unauthenticated --no-cpu-throttling --min-instances 1 --timeout 60 \
+  --set-env-vars SHORE_GCP_PROJECT=byf-beacon-2026,SHORE_MEDIA_BUCKET=byf-beacon-2026-media
+```
+Service account roles: `roles/datastore.user`, `roles/aiplatform.user`, `roles/storage.objectAdmin` (bucket only), `roles/iam.serviceAccountTokenCreator` (on itself, for signed URLs). `--allow-unauthenticated` is fine because every route checks a vessel key or Firebase token. `--min-instances 1` avoids cold starts during the demo.
+- The Dockerfile copies `contracts/` into the image: build from the repo root (`gcloud run deploy --source .` with a root-level `shore/Dockerfile` reference via `cloudbuild.yaml`, or copy contracts in a `make build` step; pick one and document it).
+
+## 11. Tests
+- InMemory repos + a deterministic fake embedder (hash → vector, with crane-leak texts close together) + a fake Gemini returning fixed JSON.
+- Delta: valid → counts; duplicate `delta_id` → no double counting; invalid → 400 with path; wrong vessel key → 401; mismatched vessel_id → 403.
+- k-anon: 4 distinct refs → suppressed in `/fleet/wellbeing` and `/fleet/overview`; same ref twice → n stays 1.
+- **Demo cluster test**: seed the 2 sister records → ingest the DEMO01 record → exactly one active cluster with 3 members, 3 vessels, linked case `SYN-ACC-001`, alerts for all 3 vessels, and `/ingest/updates` for DEMO01 returns the alert + an enriched brief.
+- Explanation citations: a fake Gemini that cites a non-existent id → that claim is dropped.
+- Role checks: `shore_safety` gets 403 on `/escalations`; `shore_psych` gets 403 on `/fleet/near-misses`.
+
+## 12. Build order
+1. ⭐ **S1** Skeleton, config, Firestore client, health, vessel keys, `create_vessel.py`, deploy to Cloud Run.
+2. ⭐ **S2** `/ingest/heartbeat`, `/ingest/delta` (validate, store, aggregates, idempotency), `/ingest/updates`, `/ingest/media`.
+3. ⭐ **S3** Embeddings + vector indexes + corpus loader + clustering + Gemini explanation + alerts. Demo cluster test green.
+4. ⭐ **S4** Enriched brief; Firebase Auth + roles; `/fleet/overview`, `/fleet/clusters*`, `/fleet/near-misses*`, `/fleet/vessels/{id}`.
+5. **S5** Wellbeing, alerts/notices, escalations, corpus search/upload.
+6. **S6** Monthly report, `/fleet/ask` with function calling, polish, all tests green.

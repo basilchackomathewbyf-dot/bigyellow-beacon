@@ -1,0 +1,63 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://bigyellowfish.ai/beacon/master_brief.schema.json",
+  "title": "MasterBrief",
+  "description": "Gemini structured output (Vertex AI) for the Master's 06:00 brief. Generated ashore from aggregates only; pushed to the vessel.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["vessel_id", "brief_date", "rest_compliance", "crew_trend", "open_hazards", "recommended_action", "provenance"],
+  "properties": {
+    "vessel_id": { "type": "string" },
+    "brief_date": { "type": "string", "format": "date" },
+    "rest_compliance": {
+      "type": "object",
+      "required": ["risk_level", "summary"],
+      "properties": {
+        "risk_level": { "type": "string", "enum": ["low", "medium", "high"] },
+        "summary": { "type": "string", "maxLength": 240 }
+      }
+    },
+    "crew_trend": {
+      "type": "object",
+      "required": ["direction", "summary", "k_anonymity_ok"],
+      "properties": {
+        "direction": { "type": "string", "enum": ["improving", "stable", "declining", "insufficient_data"] },
+        "summary": { "type": "string", "maxLength": 240 },
+        "k_anonymity_ok": { "type": "boolean", "description": "False = fewer than 5 respondents; trend withheld." }
+      }
+    },
+    "open_hazards": {
+      "type": "array",
+      "maxItems": 5,
+      "items": {
+        "type": "object",
+        "required": ["hazard_type", "area", "count_7d", "linked_cases"],
+        "properties": {
+          "hazard_type": { "type": "string" },
+          "area": { "type": "string" },
+          "count_7d": { "type": "integer" },
+          "fleet_cluster_id": { "type": ["string", "null"] },
+          "linked_cases": { "type": "array", "items": { "type": "string" }, "description": "Accident-corpus case IDs." }
+        }
+      }
+    },
+    "recommended_action": {
+      "type": "object",
+      "required": ["action", "why", "evidence_refs"],
+      "properties": {
+        "action": { "type": "string", "maxLength": 200 },
+        "why": { "type": "string", "maxLength": 300 },
+        "evidence_refs": { "type": "array", "minItems": 1, "items": { "type": "string" }, "description": "record_ids / case IDs backing the action." }
+      }
+    },
+    "provenance": {
+      "type": "object",
+      "required": ["model", "generated_at", "inputs"],
+      "properties": {
+        "model": { "type": "string" },
+        "generated_at": { "type": "string", "format": "date-time" },
+        "inputs": { "type": "array", "items": { "type": "string" } }
+      }
+    }
+  }
+}
