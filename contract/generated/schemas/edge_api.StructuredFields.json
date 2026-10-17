@@ -1,0 +1,152 @@
+{
+  "$defs": {
+    "HazardType": {
+      "enum": [
+        "slip_trip_fall",
+        "fall_from_height",
+        "ladder_access",
+        "lifting_crane_ops",
+        "mooring_ops",
+        "machinery_hydraulic",
+        "enclosed_space",
+        "fire_electrical",
+        "cargo_chemical",
+        "struck_by_object",
+        "navigation",
+        "other"
+      ],
+      "title": "HazardType",
+      "type": "string"
+    },
+    "IsmCategory": {
+      "description": "Proposed list (pending Kundan / Captain review). Doc example uses unsafe_condition.",
+      "enum": [
+        "unsafe_act",
+        "unsafe_condition",
+        "equipment_failure",
+        "procedure_not_followed",
+        "environmental",
+        "other"
+      ],
+      "title": "IsmCategory",
+      "type": "string"
+    },
+    "Severity": {
+      "enum": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "title": "Severity",
+      "type": "integer"
+    }
+  },
+  "additionalProperties": false,
+  "description": "What Gemma returns. Any field may be null (\"if unsure return null, never guess\").",
+  "properties": {
+    "title_en": {
+      "anyOf": [
+        {
+          "maxLength": 200,
+          "minLength": 1,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Title En"
+    },
+    "description_en": {
+      "anyOf": [
+        {
+          "maxLength": 4000,
+          "minLength": 1,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Description En"
+    },
+    "location_on_board": {
+      "anyOf": [
+        {
+          "maxLength": 200,
+          "minLength": 1,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Location On Board"
+    },
+    "hazard_type": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/HazardType"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "ism_category": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/IsmCategory"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "severity": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/Severity"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "immediate_action": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Immediate Action"
+    },
+    "occurred_at": {
+      "anyOf": [
+        {
+          "format": "date-time",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Occurred At"
+    }
+  },
+  "title": "StructuredFields",
+  "type": "object"
+}

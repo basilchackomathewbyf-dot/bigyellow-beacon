@@ -1,0 +1,60 @@
+{
+  "$defs": {
+    "LearningPriority": {
+      "enum": [
+        "normal",
+        "urgent"
+      ],
+      "title": "LearningPriority",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "learning_id": {
+      "maxLength": 64,
+      "minLength": 1,
+      "title": "Learning Id",
+      "type": "string"
+    },
+    "title": {
+      "title": "Title",
+      "type": "string"
+    },
+    "priority": {
+      "$ref": "#/$defs/LearningPriority"
+    },
+    "crew_total": {
+      "title": "Crew Total",
+      "type": "integer"
+    },
+    "delivered": {
+      "title": "Delivered",
+      "type": "integer"
+    },
+    "opened": {
+      "title": "Opened",
+      "type": "integer"
+    },
+    "acknowledged": {
+      "title": "Acknowledged",
+      "type": "integer"
+    },
+    "check_correct": {
+      "title": "Check Correct",
+      "type": "integer"
+    }
+  },
+  "required": [
+    "learning_id",
+    "title",
+    "priority",
+    "crew_total",
+    "delivered",
+    "opened",
+    "acknowledged",
+    "check_correct"
+  ],
+  "title": "LearningStatsView",
+  "type": "object"
+}

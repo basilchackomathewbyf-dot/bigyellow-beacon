@@ -1,0 +1,61 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "vessel_id": {
+      "maxLength": 64,
+      "minLength": 1,
+      "title": "Vessel Id",
+      "type": "string"
+    },
+    "name": {
+      "title": "Name",
+      "type": "string"
+    },
+    "code": {
+      "title": "Code",
+      "type": "string"
+    },
+    "imo": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Imo"
+    },
+    "type": {
+      "title": "Type",
+      "type": "string"
+    },
+    "fleet_group": {
+      "title": "Fleet Group",
+      "type": "string"
+    },
+    "last_sync_at": {
+      "anyOf": [
+        {
+          "format": "date-time",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Last Sync At"
+    }
+  },
+  "required": [
+    "vessel_id",
+    "name",
+    "code",
+    "type",
+    "fleet_group"
+  ],
+  "title": "Vessel",
+  "type": "object"
+}

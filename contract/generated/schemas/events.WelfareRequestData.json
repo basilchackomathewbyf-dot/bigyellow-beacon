@@ -1,0 +1,28 @@
+{
+  "additionalProperties": false,
+  "description": "Master channel only. Name and time; never check-in content.",
+  "properties": {
+    "welfare_id": {
+      "maxLength": 64,
+      "minLength": 1,
+      "title": "Welfare Id",
+      "type": "string"
+    },
+    "display_name": {
+      "title": "Display Name",
+      "type": "string"
+    },
+    "created_at": {
+      "format": "date-time",
+      "title": "Created At",
+      "type": "string"
+    }
+  },
+  "required": [
+    "welfare_id",
+    "display_name",
+    "created_at"
+  ],
+  "title": "WelfareRequestData",
+  "type": "object"
+}

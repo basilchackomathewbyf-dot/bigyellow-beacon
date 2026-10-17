@@ -1,0 +1,35 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "k_ok": {
+      "title": "K Ok",
+      "type": "boolean"
+    },
+    "n": {
+      "title": "N",
+      "type": "integer"
+    },
+    "direction": {
+      "enum": [
+        "improving",
+        "stable",
+        "declining",
+        "insufficient_data"
+      ],
+      "title": "Direction",
+      "type": "string"
+    },
+    "summary": {
+      "title": "Summary",
+      "type": "string"
+    }
+  },
+  "required": [
+    "k_ok",
+    "n",
+    "direction",
+    "summary"
+  ],
+  "title": "MoodTrend",
+  "type": "object"
+}

@@ -1,0 +1,38 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "card_id": {
+      "maxLength": 64,
+      "minLength": 1,
+      "title": "Card Id",
+      "type": "string"
+    },
+    "vessel_id": {
+      "maxLength": 64,
+      "minLength": 1,
+      "title": "Vessel Id",
+      "type": "string"
+    },
+    "views": {
+      "title": "Views",
+      "type": "integer"
+    },
+    "helpful": {
+      "title": "Helpful",
+      "type": "integer"
+    },
+    "saved": {
+      "title": "Saved",
+      "type": "integer"
+    }
+  },
+  "required": [
+    "card_id",
+    "vessel_id",
+    "views",
+    "helpful",
+    "saved"
+  ],
+  "title": "AnchorStatsPayload",
+  "type": "object"
+}

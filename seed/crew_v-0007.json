@@ -1,0 +1,133 @@
+{
+  "_note": "Synthetic roster for v-0007. Names never leave the edge. Officers=5, ratings=7, cadets=2 → cadet band collapses to 'crew' on shore (k=5). Demo PINs only.",
+  "vessel_id": "v-0007",
+  "demo_reporter": "c-0007-aru",
+  "crew": [
+    {
+      "crew_id": "c-0007-mst",
+      "display_name": "Capt. Rajiv Menon",
+      "rank": "Master",
+      "rank_band": "officer",
+      "language": "en",
+      "is_master": true,
+      "pin_for_demo": "123456"
+    },
+    {
+      "crew_id": "c-0007-cof",
+      "display_name": "Anita Desai",
+      "rank": "Chief Officer (Safety Officer)",
+      "rank_band": "officer",
+      "language": "en",
+      "is_master": true,
+      "pin_for_demo": "123456"
+    },
+    {
+      "crew_id": "c-0007-2of",
+      "display_name": "Joel Fernandes",
+      "rank": "Second Officer",
+      "rank_band": "officer",
+      "language": "en",
+      "is_master": false,
+      "pin_for_demo": "1234"
+    },
+    {
+      "crew_id": "c-0007-cen",
+      "display_name": "Viktor Shevchenko",
+      "rank": "Chief Engineer",
+      "rank_band": "officer",
+      "language": "uk",
+      "is_master": false,
+      "pin_for_demo": "1234"
+    },
+    {
+      "crew_id": "c-0007-2en",
+      "display_name": "Budi Santoso",
+      "rank": "Second Engineer",
+      "rank_band": "officer",
+      "language": "id",
+      "is_master": false,
+      "pin_for_demo": "1234"
+    },
+    {
+      "crew_id": "c-0007-bos",
+      "display_name": "Ramon Dela Cruz",
+      "rank": "Bosun",
+      "rank_band": "rating",
+      "language": "tl",
+      "is_master": false,
+      "pin_for_demo": "1234"
+    },
+    {
+      "crew_id": "c-0007-aru",
+      "display_name": "Arun Yadav",
+      "rank": "Able Seaman",
+      "rank_band": "rating",
+      "language": "hi",
+      "is_master": false,
+      "pin_for_demo": "1234"
+    },
+    {
+      "crew_id": "c-0007-ab2",
+      "display_name": "Jun Reyes",
+      "rank": "Able Seaman",
+      "rank_band": "rating",
+      "language": "tl",
+      "is_master": false,
+      "pin_for_demo": "1234"
+    },
+    {
+      "crew_id": "c-0007-os1",
+      "display_name": "Manoj Singh",
+      "rank": "Ordinary Seaman",
+      "rank_band": "rating",
+      "language": "hi",
+      "is_master": false,
+      "pin_for_demo": "1234"
+    },
+    {
+      "crew_id": "c-0007-oil",
+      "display_name": "Mark Bautista",
+      "rank": "Oiler",
+      "rank_band": "rating",
+      "language": "tl",
+      "is_master": false,
+      "pin_for_demo": "1234"
+    },
+    {
+      "crew_id": "c-0007-ftr",
+      "display_name": "Li Wei",
+      "rank": "Fitter",
+      "rank_band": "rating",
+      "language": "zh",
+      "is_master": false,
+      "pin_for_demo": "1234"
+    },
+    {
+      "crew_id": "c-0007-ck1",
+      "display_name": "Suresh Pillai",
+      "rank": "Chief Cook",
+      "rank_band": "rating",
+      "language": "en",
+      "is_master": false,
+      "pin_for_demo": "1234"
+    },
+    {
+      "crew_id": "c-0007-cd1",
+      "display_name": "Priya Nair",
+      "rank": "Deck Cadet",
+      "rank_band": "cadet",
+      "language": "en",
+      "is_master": false,
+      "pin_for_demo": "1234"
+    },
+    {
+      "crew_id": "c-0007-cd2",
+      "display_name": "Rohan Gupta",
+      "rank": "Engine Cadet",
+      "rank_band": "cadet",
+      "language": "hi",
+      "is_master": false,
+      "pin_for_demo": "1234"
+    }
+  ]
+}

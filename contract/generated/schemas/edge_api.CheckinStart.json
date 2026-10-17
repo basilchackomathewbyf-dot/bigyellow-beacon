@@ -1,0 +1,78 @@
+{
+  "$defs": {
+    "CheckinMode": {
+      "enum": [
+        "quick",
+        "chat"
+      ],
+      "title": "CheckinMode",
+      "type": "string"
+    },
+    "CheckinTag": {
+      "enum": [
+        "rest",
+        "workload",
+        "home",
+        "family",
+        "health",
+        "team"
+      ],
+      "title": "CheckinTag",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "mode": {
+      "$ref": "#/$defs/CheckinMode"
+    },
+    "mood": {
+      "maximum": 5,
+      "minimum": 1,
+      "title": "Mood",
+      "type": "integer"
+    },
+    "sleep_hours": {
+      "anyOf": [
+        {
+          "maximum": 24,
+          "minimum": 0,
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Sleep Hours"
+    },
+    "fatigue": {
+      "anyOf": [
+        {
+          "maximum": 5,
+          "minimum": 1,
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Fatigue"
+    },
+    "tags": {
+      "default": [],
+      "items": {
+        "$ref": "#/$defs/CheckinTag"
+      },
+      "title": "Tags",
+      "type": "array"
+    }
+  },
+  "required": [
+    "mode",
+    "mood"
+  ],
+  "title": "CheckinStart",
+  "type": "object"
+}

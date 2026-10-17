@@ -1,0 +1,19 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "check_correct": {
+      "anyOf": [
+        {
+          "type": "boolean"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Check Correct"
+    }
+  },
+  "title": "LearningAckResult",
+  "type": "object"
+}

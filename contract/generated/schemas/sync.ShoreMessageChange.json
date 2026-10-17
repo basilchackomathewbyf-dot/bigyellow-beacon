@@ -1,0 +1,39 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "message_id": {
+      "maxLength": 64,
+      "minLength": 1,
+      "title": "Message Id",
+      "type": "string"
+    },
+    "ticket_id": {
+      "maxLength": 64,
+      "minLength": 1,
+      "title": "Ticket Id",
+      "type": "string"
+    },
+    "reporter_ref": {
+      "title": "Reporter Ref",
+      "type": "string"
+    },
+    "body": {
+      "title": "Body",
+      "type": "string"
+    },
+    "created_at": {
+      "format": "date-time",
+      "title": "Created At",
+      "type": "string"
+    }
+  },
+  "required": [
+    "message_id",
+    "ticket_id",
+    "reporter_ref",
+    "body",
+    "created_at"
+  ],
+  "title": "ShoreMessageChange",
+  "type": "object"
+}

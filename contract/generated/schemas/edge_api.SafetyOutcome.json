@@ -1,0 +1,53 @@
+{
+  "$defs": {
+    "RailCategory": {
+      "enum": [
+        "self_harm",
+        "harm_to_others",
+        "abuse",
+        "medical_emergency",
+        "model_output_deny"
+      ],
+      "title": "RailCategory",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "rail_hit": {
+      "default": false,
+      "title": "Rail Hit",
+      "type": "boolean"
+    },
+    "category": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/RailCategory"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "fixed_message": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Fixed Message"
+    },
+    "offer_welfare": {
+      "default": false,
+      "title": "Offer Welfare",
+      "type": "boolean"
+    }
+  },
+  "title": "SafetyOutcome",
+  "type": "object"
+}

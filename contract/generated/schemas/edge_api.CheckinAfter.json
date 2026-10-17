@@ -1,0 +1,19 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "supportive_line": {
+      "title": "Supportive Line",
+      "type": "string"
+    },
+    "tip": {
+      "title": "Tip",
+      "type": "string"
+    }
+  },
+  "required": [
+    "supportive_line",
+    "tip"
+  ],
+  "title": "CheckinAfter",
+  "type": "object"
+}

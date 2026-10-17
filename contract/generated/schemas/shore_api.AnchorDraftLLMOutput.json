@@ -1,0 +1,60 @@
+{
+  "$defs": {
+    "AnchorType": {
+      "enum": [
+        "motivation",
+        "safety",
+        "news"
+      ],
+      "title": "AnchorType",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "type": {
+      "$ref": "#/$defs/AnchorType"
+    },
+    "title": {
+      "maxLength": 80,
+      "title": "Title",
+      "type": "string"
+    },
+    "body": {
+      "maxLength": 400,
+      "title": "Body",
+      "type": "string"
+    },
+    "source_name": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Source Name"
+    },
+    "source_url": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Source Url"
+    }
+  },
+  "required": [
+    "type",
+    "title",
+    "body"
+  ],
+  "title": "AnchorDraftLLMOutput",
+  "type": "object"
+}

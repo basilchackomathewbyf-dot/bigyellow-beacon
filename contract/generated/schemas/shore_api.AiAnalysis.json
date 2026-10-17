@@ -1,0 +1,263 @@
+{
+  "$defs": {
+    "AnalysisLLMOutput": {
+      "additionalProperties": false,
+      "description": "response_schema for Gemini ticket analysis. Never include reporter_ref in the prompt.",
+      "properties": {
+        "summary": {
+          "maxLength": 400,
+          "title": "Summary",
+          "type": "string"
+        },
+        "contributing_factors": {
+          "items": {
+            "type": "string"
+          },
+          "maxItems": 6,
+          "title": "Contributing Factors",
+          "type": "array"
+        },
+        "ism_check": {
+          "$ref": "#/$defs/Check"
+        },
+        "severity_check": {
+          "$ref": "#/$defs/Check"
+        },
+        "corrective_actions": {
+          "items": {
+            "type": "string"
+          },
+          "maxItems": 5,
+          "title": "Corrective Actions",
+          "type": "array"
+        },
+        "preventive_actions": {
+          "items": {
+            "type": "string"
+          },
+          "maxItems": 5,
+          "title": "Preventive Actions",
+          "type": "array"
+        },
+        "corpus_match_reasons": {
+          "default": [],
+          "items": {
+            "$ref": "#/$defs/CorpusReason"
+          },
+          "title": "Corpus Match Reasons",
+          "type": "array"
+        },
+        "suggest_learning": {
+          "title": "Suggest Learning",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "summary",
+        "contributing_factors",
+        "ism_check",
+        "severity_check",
+        "corrective_actions",
+        "preventive_actions",
+        "suggest_learning"
+      ],
+      "title": "AnalysisLLMOutput",
+      "type": "object"
+    },
+    "Check": {
+      "additionalProperties": false,
+      "properties": {
+        "current": {
+          "title": "Current",
+          "type": "string"
+        },
+        "suggested": {
+          "title": "Suggested",
+          "type": "string"
+        },
+        "agrees": {
+          "title": "Agrees",
+          "type": "boolean"
+        },
+        "reason": {
+          "title": "Reason",
+          "type": "string"
+        }
+      },
+      "required": [
+        "current",
+        "suggested",
+        "agrees",
+        "reason"
+      ],
+      "title": "Check",
+      "type": "object"
+    },
+    "CorpusMatch": {
+      "additionalProperties": false,
+      "properties": {
+        "case_id": {
+          "maxLength": 64,
+          "minLength": 1,
+          "title": "Case Id",
+          "type": "string"
+        },
+        "title": {
+          "title": "Title",
+          "type": "string"
+        },
+        "source": {
+          "title": "Source",
+          "type": "string"
+        },
+        "url": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Url"
+        },
+        "score": {
+          "title": "Score",
+          "type": "number"
+        },
+        "why": {
+          "title": "Why",
+          "type": "string"
+        }
+      },
+      "required": [
+        "case_id",
+        "title",
+        "source",
+        "score",
+        "why"
+      ],
+      "title": "CorpusMatch",
+      "type": "object"
+    },
+    "CorpusReason": {
+      "additionalProperties": false,
+      "properties": {
+        "case_id": {
+          "title": "Case Id",
+          "type": "string"
+        },
+        "why": {
+          "title": "Why",
+          "type": "string"
+        }
+      },
+      "required": [
+        "case_id",
+        "why"
+      ],
+      "title": "CorpusReason",
+      "type": "object"
+    },
+    "SimilarTicket": {
+      "additionalProperties": false,
+      "properties": {
+        "ticket_id": {
+          "maxLength": 64,
+          "minLength": 1,
+          "title": "Ticket Id",
+          "type": "string"
+        },
+        "ticket_no": {
+          "title": "Ticket No",
+          "type": "string"
+        },
+        "vessel_name": {
+          "title": "Vessel Name",
+          "type": "string"
+        },
+        "title_en": {
+          "title": "Title En",
+          "type": "string"
+        },
+        "score": {
+          "title": "Score",
+          "type": "number"
+        }
+      },
+      "required": [
+        "ticket_id",
+        "ticket_no",
+        "vessel_name",
+        "title_en",
+        "score"
+      ],
+      "title": "SimilarTicket",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "analysis_id": {
+      "maxLength": 64,
+      "minLength": 1,
+      "title": "Analysis Id",
+      "type": "string"
+    },
+    "ticket_id": {
+      "maxLength": 64,
+      "minLength": 1,
+      "title": "Ticket Id",
+      "type": "string"
+    },
+    "model": {
+      "title": "Model",
+      "type": "string"
+    },
+    "prompt_version": {
+      "title": "Prompt Version",
+      "type": "string"
+    },
+    "created_at": {
+      "format": "date-time",
+      "title": "Created At",
+      "type": "string"
+    },
+    "output": {
+      "$ref": "#/$defs/AnalysisLLMOutput"
+    },
+    "similar_tickets": {
+      "default": [],
+      "items": {
+        "$ref": "#/$defs/SimilarTicket"
+      },
+      "title": "Similar Tickets",
+      "type": "array"
+    },
+    "corpus_matches": {
+      "default": [],
+      "items": {
+        "$ref": "#/$defs/CorpusMatch"
+      },
+      "title": "Corpus Matches",
+      "type": "array"
+    },
+    "ai_generated": {
+      "const": true,
+      "default": true,
+      "title": "Ai Generated",
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "analysis_id",
+    "ticket_id",
+    "model",
+    "prompt_version",
+    "created_at",
+    "output"
+  ],
+  "title": "AiAnalysis",
+  "type": "object"
+}

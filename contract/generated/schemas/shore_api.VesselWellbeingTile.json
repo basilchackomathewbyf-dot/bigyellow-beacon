@@ -1,0 +1,62 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "vessel_id": {
+      "maxLength": 64,
+      "minLength": 1,
+      "title": "Vessel Id",
+      "type": "string"
+    },
+    "vessel_name": {
+      "title": "Vessel Name",
+      "type": "string"
+    },
+    "k_ok": {
+      "title": "K Ok",
+      "type": "boolean"
+    },
+    "n": {
+      "anyOf": [
+        {
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "N"
+    },
+    "mood_avg": {
+      "anyOf": [
+        {
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Mood Avg"
+    },
+    "fatigue_avg": {
+      "anyOf": [
+        {
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Fatigue Avg"
+    }
+  },
+  "required": [
+    "vessel_id",
+    "vessel_name",
+    "k_ok"
+  ],
+  "title": "VesselWellbeingTile",
+  "type": "object"
+}

@@ -1,0 +1,36 @@
+{
+  "title": "Hydraulic oil on deck: stop, isolate, clean",
+  "context": "Crane hydraulic leaks have caused slips on three vessels this week.",
+  "situation": "You find oil on deck near a crane pedestal during rounds.",
+  "do_points": [
+    "Stop crane ops and isolate the crane",
+    "Cordon and clean the area with absorbent",
+    "Report the leak source to the engine room"
+  ],
+  "dont_points": [
+    "Don't walk through oil to finish a task",
+    "Don't hose oil overboard",
+    "Don't restart the crane before the hose is checked"
+  ],
+  "check_question": {
+    "question": "First thing to do when you see oil near a crane?",
+    "options": [
+      "Finish the job quickly",
+      "Stop and isolate the crane",
+      "Wash it overboard"
+    ],
+    "correct_index": 1
+  },
+  "tags": {
+    "tool": [
+      "deck crane"
+    ],
+    "area": [
+      "main deck"
+    ],
+    "situation": [
+      "hydraulic leak"
+    ]
+  },
+  "suggested_audience": "all_vessels"
+}

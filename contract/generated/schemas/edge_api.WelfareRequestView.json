@@ -1,0 +1,50 @@
+{
+  "$defs": {
+    "WelfareStatus": {
+      "enum": [
+        "open",
+        "acknowledged",
+        "contacted"
+      ],
+      "title": "WelfareStatus",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "description": "Master sees name and time only. Never check-in text or scores.",
+  "properties": {
+    "welfare_id": {
+      "maxLength": 64,
+      "minLength": 1,
+      "title": "Welfare Id",
+      "type": "string"
+    },
+    "crew_id": {
+      "maxLength": 64,
+      "minLength": 1,
+      "title": "Crew Id",
+      "type": "string"
+    },
+    "display_name": {
+      "title": "Display Name",
+      "type": "string"
+    },
+    "created_at": {
+      "format": "date-time",
+      "title": "Created At",
+      "type": "string"
+    },
+    "status": {
+      "$ref": "#/$defs/WelfareStatus"
+    }
+  },
+  "required": [
+    "welfare_id",
+    "crew_id",
+    "display_name",
+    "created_at",
+    "status"
+  ],
+  "title": "WelfareRequestView",
+  "type": "object"
+}

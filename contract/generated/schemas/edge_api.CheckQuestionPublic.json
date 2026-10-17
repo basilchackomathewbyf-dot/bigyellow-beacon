@@ -1,0 +1,24 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "question": {
+      "title": "Question",
+      "type": "string"
+    },
+    "options": {
+      "items": {
+        "type": "string"
+      },
+      "maxItems": 3,
+      "minItems": 3,
+      "title": "Options",
+      "type": "array"
+    }
+  },
+  "required": [
+    "question",
+    "options"
+  ],
+  "title": "CheckQuestionPublic",
+  "type": "object"
+}

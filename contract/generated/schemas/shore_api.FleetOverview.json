@@ -1,0 +1,210 @@
+{
+  "$defs": {
+    "HazardCluster": {
+      "additionalProperties": false,
+      "properties": {
+        "cluster_id": {
+          "maxLength": 64,
+          "minLength": 1,
+          "title": "Cluster Id",
+          "type": "string"
+        },
+        "label": {
+          "title": "Label",
+          "type": "string"
+        },
+        "hazard_type": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/HazardType"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "ticket_ids": {
+          "items": {
+            "maxLength": 64,
+            "minLength": 1,
+            "type": "string"
+          },
+          "title": "Ticket Ids",
+          "type": "array"
+        },
+        "vessel_ids": {
+          "items": {
+            "maxLength": 64,
+            "minLength": 1,
+            "type": "string"
+          },
+          "title": "Vessel Ids",
+          "type": "array"
+        },
+        "size": {
+          "title": "Size",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "cluster_id",
+        "label",
+        "ticket_ids",
+        "vessel_ids",
+        "size"
+      ],
+      "title": "HazardCluster",
+      "type": "object"
+    },
+    "HazardType": {
+      "enum": [
+        "slip_trip_fall",
+        "fall_from_height",
+        "ladder_access",
+        "lifting_crane_ops",
+        "mooring_ops",
+        "machinery_hydraulic",
+        "enclosed_space",
+        "fire_electrical",
+        "cargo_chemical",
+        "struck_by_object",
+        "navigation",
+        "other"
+      ],
+      "title": "HazardType",
+      "type": "string"
+    },
+    "VesselWellbeingTile": {
+      "additionalProperties": false,
+      "properties": {
+        "vessel_id": {
+          "maxLength": 64,
+          "minLength": 1,
+          "title": "Vessel Id",
+          "type": "string"
+        },
+        "vessel_name": {
+          "title": "Vessel Name",
+          "type": "string"
+        },
+        "k_ok": {
+          "title": "K Ok",
+          "type": "boolean"
+        },
+        "n": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "N"
+        },
+        "mood_avg": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Mood Avg"
+        },
+        "fatigue_avg": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Fatigue Avg"
+        }
+      },
+      "required": [
+        "vessel_id",
+        "vessel_name",
+        "k_ok"
+      ],
+      "title": "VesselWellbeingTile",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "open_by_severity": {
+      "additionalProperties": {
+        "type": "integer"
+      },
+      "title": "Open By Severity",
+      "type": "object"
+    },
+    "tickets_per_vessel_30d": {
+      "additionalProperties": {
+        "type": "integer"
+      },
+      "title": "Tickets Per Vessel 30D",
+      "type": "object"
+    },
+    "top_hazard_types": {
+      "items": {
+        "maxItems": 2,
+        "minItems": 2,
+        "prefixItems": [
+          {
+            "$ref": "#/$defs/HazardType"
+          },
+          {
+            "type": "integer"
+          }
+        ],
+        "type": "array"
+      },
+      "title": "Top Hazard Types",
+      "type": "array"
+    },
+    "learnings_ack_rate": {
+      "anyOf": [
+        {
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Learnings Ack Rate"
+    },
+    "clusters": {
+      "default": [],
+      "items": {
+        "$ref": "#/$defs/HazardCluster"
+      },
+      "title": "Clusters",
+      "type": "array"
+    },
+    "wellbeing": {
+      "default": [],
+      "items": {
+        "$ref": "#/$defs/VesselWellbeingTile"
+      },
+      "title": "Wellbeing",
+      "type": "array"
+    }
+  },
+  "required": [
+    "open_by_severity",
+    "tickets_per_vessel_30d",
+    "top_hazard_types"
+  ],
+  "title": "FleetOverview",
+  "type": "object"
+}

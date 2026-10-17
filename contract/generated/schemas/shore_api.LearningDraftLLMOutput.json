@@ -1,0 +1,133 @@
+{
+  "$defs": {
+    "Audience": {
+      "enum": [
+        "same_vessel",
+        "selected_vessels",
+        "all_vessels"
+      ],
+      "title": "Audience",
+      "type": "string"
+    },
+    "CheckQuestion": {
+      "additionalProperties": false,
+      "properties": {
+        "question": {
+          "title": "Question",
+          "type": "string"
+        },
+        "options": {
+          "items": {
+            "type": "string"
+          },
+          "maxItems": 3,
+          "minItems": 3,
+          "title": "Options",
+          "type": "array"
+        },
+        "correct_index": {
+          "maximum": 2,
+          "minimum": 0,
+          "title": "Correct Index",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "question",
+        "options",
+        "correct_index"
+      ],
+      "title": "CheckQuestion",
+      "type": "object"
+    },
+    "LearningTags": {
+      "additionalProperties": false,
+      "properties": {
+        "tool": {
+          "default": [],
+          "items": {
+            "type": "string"
+          },
+          "title": "Tool",
+          "type": "array"
+        },
+        "area": {
+          "default": [],
+          "items": {
+            "type": "string"
+          },
+          "title": "Area",
+          "type": "array"
+        },
+        "situation": {
+          "default": [],
+          "items": {
+            "type": "string"
+          },
+          "title": "Situation",
+          "type": "array"
+        }
+      },
+      "title": "LearningTags",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "description": "response_schema for Gemini microlearning drafts. No reporter or vessel-identifying detail.",
+  "properties": {
+    "title": {
+      "maxLength": 80,
+      "title": "Title",
+      "type": "string"
+    },
+    "context": {
+      "maxLength": 240,
+      "title": "Context",
+      "type": "string"
+    },
+    "situation": {
+      "maxLength": 400,
+      "title": "Situation",
+      "type": "string"
+    },
+    "do_points": {
+      "items": {
+        "type": "string"
+      },
+      "maxItems": 3,
+      "minItems": 3,
+      "title": "Do Points",
+      "type": "array"
+    },
+    "dont_points": {
+      "items": {
+        "type": "string"
+      },
+      "maxItems": 3,
+      "minItems": 3,
+      "title": "Dont Points",
+      "type": "array"
+    },
+    "check_question": {
+      "$ref": "#/$defs/CheckQuestion"
+    },
+    "tags": {
+      "$ref": "#/$defs/LearningTags"
+    },
+    "suggested_audience": {
+      "$ref": "#/$defs/Audience"
+    }
+  },
+  "required": [
+    "title",
+    "context",
+    "situation",
+    "do_points",
+    "dont_points",
+    "check_question",
+    "tags",
+    "suggested_audience"
+  ],
+  "title": "LearningDraftLLMOutput",
+  "type": "object"
+}

@@ -1,0 +1,57 @@
+{
+  "$defs": {
+    "Role": {
+      "enum": [
+        "crew",
+        "master",
+        "shore_reviewer",
+        "shore_admin",
+        "vessel"
+      ],
+      "title": "Role",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "access_token": {
+      "title": "Access Token",
+      "type": "string"
+    },
+    "token_type": {
+      "const": "bearer",
+      "default": "bearer",
+      "title": "Token Type",
+      "type": "string"
+    },
+    "expires_at": {
+      "format": "date-time",
+      "title": "Expires At",
+      "type": "string"
+    },
+    "role": {
+      "$ref": "#/$defs/Role"
+    },
+    "crew_id": {
+      "maxLength": 64,
+      "minLength": 1,
+      "title": "Crew Id",
+      "type": "string"
+    },
+    "vessel_id": {
+      "maxLength": 64,
+      "minLength": 1,
+      "title": "Vessel Id",
+      "type": "string"
+    }
+  },
+  "required": [
+    "access_token",
+    "expires_at",
+    "role",
+    "crew_id",
+    "vessel_id"
+  ],
+  "title": "SessionResponse",
+  "type": "object"
+}

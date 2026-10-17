@@ -1,0 +1,75 @@
+{
+  "$defs": {
+    "PullChange": {
+      "additionalProperties": false,
+      "properties": {
+        "change_id": {
+          "maxLength": 64,
+          "minLength": 1,
+          "title": "Change Id",
+          "type": "string"
+        },
+        "type": {
+          "$ref": "#/$defs/PullChangeType"
+        },
+        "created_at": {
+          "format": "date-time",
+          "title": "Created At",
+          "type": "string"
+        },
+        "payload": {
+          "additionalProperties": true,
+          "title": "Payload",
+          "type": "object"
+        }
+      },
+      "required": [
+        "change_id",
+        "type",
+        "created_at",
+        "payload"
+      ],
+      "title": "PullChange",
+      "type": "object"
+    },
+    "PullChangeType": {
+      "enum": [
+        "ticket.shore_status",
+        "ticket_message",
+        "learning.published",
+        "learning.retracted",
+        "fleet_alert",
+        "rail_update",
+        "anchor.scheduled",
+        "brief_enrichment"
+      ],
+      "title": "PullChangeType",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "changes": {
+      "items": {
+        "$ref": "#/$defs/PullChange"
+      },
+      "title": "Changes",
+      "type": "array"
+    },
+    "next_cursor": {
+      "title": "Next Cursor",
+      "type": "string"
+    },
+    "has_more": {
+      "title": "Has More",
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "changes",
+    "next_cursor",
+    "has_more"
+  ],
+  "title": "PullResponse",
+  "type": "object"
+}

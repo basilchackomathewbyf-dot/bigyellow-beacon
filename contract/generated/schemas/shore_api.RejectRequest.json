@@ -1,0 +1,32 @@
+{
+  "$defs": {
+    "RejectReason": {
+      "enum": [
+        "DUPLICATE",
+        "NOT_A_NEAR_MISS",
+        "INSUFFICIENT_INFO",
+        "OUT_OF_SCOPE"
+      ],
+      "title": "RejectReason",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "reason": {
+      "$ref": "#/$defs/RejectReason"
+    },
+    "note": {
+      "maxLength": 1000,
+      "minLength": 1,
+      "title": "Note",
+      "type": "string"
+    }
+  },
+  "required": [
+    "reason",
+    "note"
+  ],
+  "title": "RejectRequest",
+  "type": "object"
+}

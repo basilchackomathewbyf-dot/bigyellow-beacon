@@ -1,0 +1,64 @@
+{
+  "$defs": {
+    "PushEventAck": {
+      "additionalProperties": false,
+      "properties": {
+        "event_id": {
+          "maxLength": 64,
+          "minLength": 1,
+          "title": "Event Id",
+          "type": "string"
+        },
+        "status": {
+          "enum": [
+            "applied",
+            "duplicate",
+            "rejected"
+          ],
+          "title": "Status",
+          "type": "string"
+        },
+        "error": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Error"
+        }
+      },
+      "required": [
+        "event_id",
+        "status"
+      ],
+      "title": "PushEventAck",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "batch_id": {
+      "maxLength": 64,
+      "minLength": 1,
+      "title": "Batch Id",
+      "type": "string"
+    },
+    "acks": {
+      "items": {
+        "$ref": "#/$defs/PushEventAck"
+      },
+      "title": "Acks",
+      "type": "array"
+    }
+  },
+  "required": [
+    "batch_id",
+    "acks"
+  ],
+  "title": "PushResponse",
+  "type": "object"
+}

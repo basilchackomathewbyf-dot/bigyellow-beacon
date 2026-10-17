@@ -1,0 +1,27 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "media_id": {
+      "maxLength": 64,
+      "minLength": 1,
+      "title": "Media Id",
+      "type": "string"
+    },
+    "url": {
+      "title": "Url",
+      "type": "string"
+    },
+    "expires_at": {
+      "format": "date-time",
+      "title": "Expires At",
+      "type": "string"
+    }
+  },
+  "required": [
+    "media_id",
+    "url",
+    "expires_at"
+  ],
+  "title": "LearningMediaUrl",
+  "type": "object"
+}

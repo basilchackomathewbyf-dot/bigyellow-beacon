@@ -1,0 +1,85 @@
+{
+  "changes": [
+    {
+      "change_id": "0192f0c5-0000-7000-8000-000000000001",
+      "type": "ticket.shore_status",
+      "created_at": "2026-10-18T05:40:00Z",
+      "payload": {
+        "ticket_id": "0192f0c2-7a10-7c4e-9a51-3d0b6f8e0001",
+        "shore_status": "IN_REVIEW",
+        "reject_reason": null,
+        "reject_note": null,
+        "updated_at": "2026-10-18T05:40:00Z"
+      }
+    },
+    {
+      "change_id": "0192f0c5-0000-7000-8000-000000000002",
+      "type": "ticket_message",
+      "created_at": "2026-10-18T05:40:00Z",
+      "payload": {
+        "message_id": "0192f0c4-0000-7000-8000-0000000001d1",
+        "ticket_id": "0192f0c2-7a10-7c4e-9a51-3d0b6f8e0001",
+        "reporter_ref": "rr_658511d5e17eb037b75ee13991c25b4a",
+        "body": "Thank you. Was the leak source found?",
+        "created_at": "2026-10-18T05:40:00Z"
+      }
+    },
+    {
+      "change_id": "0192f0c5-0000-7000-8000-000000000003",
+      "type": "learning.published",
+      "created_at": "2026-10-18T05:40:00Z",
+      "payload": {
+        "learning_id": "0192f0c4-0000-7000-8000-0000000001f1",
+        "title": "Hydraulic oil on deck: stop, isolate, clean",
+        "context": "Crane hydraulic leaks have caused slips on three vessels this week.",
+        "situation": "You find oil on deck near a crane pedestal during rounds.",
+        "do_points": [
+          "Stop crane ops and isolate the crane",
+          "Cordon and clean the area with absorbent",
+          "Report the leak source to the engine room"
+        ],
+        "dont_points": [
+          "Don't walk through oil to finish a task",
+          "Don't hose oil overboard",
+          "Don't restart the crane before the hose is checked"
+        ],
+        "check_question": {
+          "question": "First thing to do when you see oil near a crane?",
+          "options": [
+            "Finish the job quickly",
+            "Stop and isolate the crane",
+            "Wash it overboard"
+          ],
+          "correct_index": 1
+        },
+        "priority": "urgent",
+        "rank_filter": "all",
+        "media": [
+          {
+            "media_id": "0192f0c4-0000-7000-8000-0000000001e1",
+            "kind": "video",
+            "bytes": 1200000,
+            "sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+            "duration_s": 5.0
+          }
+        ],
+        "published_at": "2026-10-18T05:40:00Z"
+      }
+    },
+    {
+      "change_id": "0192f0c5-0000-7000-8000-000000000004",
+      "type": "brief_enrichment",
+      "created_at": "2026-10-18T05:40:00Z",
+      "payload": {
+        "vessel_id": "v-0007",
+        "brief_date": "2026-10-18",
+        "fleet_context": "Two sister vessels reported crane hydraulic leaks this week; one past case led to a fractured wrist.",
+        "cluster_ids": [
+          "cl-crane-hydraulic"
+        ]
+      }
+    }
+  ],
+  "next_cursor": "2026-10-18T05:40:00Z#4",
+  "has_more": false
+}

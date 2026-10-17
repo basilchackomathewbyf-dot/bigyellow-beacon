@@ -1,0 +1,77 @@
+{
+  "$defs": {
+    "CheckinTag": {
+      "enum": [
+        "rest",
+        "workload",
+        "home",
+        "family",
+        "health",
+        "team"
+      ],
+      "title": "CheckinTag",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "ship_date": {
+      "format": "date",
+      "title": "Ship Date",
+      "type": "string"
+    },
+    "mood": {
+      "maximum": 5,
+      "minimum": 1,
+      "title": "Mood",
+      "type": "integer"
+    },
+    "fatigue": {
+      "maximum": 5,
+      "minimum": 1,
+      "title": "Fatigue",
+      "type": "integer"
+    },
+    "workload": {
+      "anyOf": [
+        {
+          "maximum": 5,
+          "minimum": 1,
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Workload"
+    },
+    "sleep_hours": {
+      "anyOf": [
+        {
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Sleep Hours"
+    },
+    "tags": {
+      "default": [],
+      "items": {
+        "$ref": "#/$defs/CheckinTag"
+      },
+      "title": "Tags",
+      "type": "array"
+    }
+  },
+  "required": [
+    "ship_date",
+    "mood",
+    "fatigue"
+  ],
+  "title": "MoodEntry",
+  "type": "object"
+}

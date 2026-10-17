@@ -1,0 +1,33 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "access_token": {
+      "title": "Access Token",
+      "type": "string"
+    },
+    "refresh_token": {
+      "title": "Refresh Token",
+      "type": "string"
+    },
+    "expires_in": {
+      "title": "Expires In",
+      "type": "integer"
+    },
+    "role": {
+      "enum": [
+        "shore_reviewer",
+        "shore_admin"
+      ],
+      "title": "Role",
+      "type": "string"
+    }
+  },
+  "required": [
+    "access_token",
+    "refresh_token",
+    "expires_in",
+    "role"
+  ],
+  "title": "ShoreToken",
+  "type": "object"
+}

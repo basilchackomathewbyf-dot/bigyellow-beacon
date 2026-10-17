@@ -1,0 +1,19 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "email": {
+      "title": "Email",
+      "type": "string"
+    },
+    "password": {
+      "title": "Password",
+      "type": "string"
+    }
+  },
+  "required": [
+    "email",
+    "password"
+  ],
+  "title": "ShoreLogin",
+  "type": "object"
+}

@@ -1,0 +1,77 @@
+{
+  "$defs": {
+    "HazardType": {
+      "enum": [
+        "slip_trip_fall",
+        "fall_from_height",
+        "ladder_access",
+        "lifting_crane_ops",
+        "mooring_ops",
+        "machinery_hydraulic",
+        "enclosed_space",
+        "fire_electrical",
+        "cargo_chemical",
+        "struck_by_object",
+        "navigation",
+        "other"
+      ],
+      "title": "HazardType",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "cluster_id": {
+      "maxLength": 64,
+      "minLength": 1,
+      "title": "Cluster Id",
+      "type": "string"
+    },
+    "label": {
+      "title": "Label",
+      "type": "string"
+    },
+    "hazard_type": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/HazardType"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "ticket_ids": {
+      "items": {
+        "maxLength": 64,
+        "minLength": 1,
+        "type": "string"
+      },
+      "title": "Ticket Ids",
+      "type": "array"
+    },
+    "vessel_ids": {
+      "items": {
+        "maxLength": 64,
+        "minLength": 1,
+        "type": "string"
+      },
+      "title": "Vessel Ids",
+      "type": "array"
+    },
+    "size": {
+      "title": "Size",
+      "type": "integer"
+    }
+  },
+  "required": [
+    "cluster_id",
+    "label",
+    "ticket_ids",
+    "vessel_ids",
+    "size"
+  ],
+  "title": "HazardCluster",
+  "type": "object"
+}

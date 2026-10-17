@@ -1,0 +1,10 @@
+{
+  "link": "DOWN",
+  "override": "auto",
+  "last_probe_at": "2026-10-18T05:40:00Z",
+  "last_push_at": null,
+  "last_pull_at": null,
+  "pending_events": 3,
+  "pending_media": 1,
+  "last_push_bytes_gz": null
+}

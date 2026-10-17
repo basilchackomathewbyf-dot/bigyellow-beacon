@@ -1,76 +1,67 @@
 ---
-description: BigYellow Beacon — shared product context, architecture, contracts and privacy rules for every part of the repo
+description: BigYellow Beacon POC — shared context, source-of-truth docs, privacy rules and conventions for every part of the repo
 alwaysApply: true
 ---
 
-# BigYellow Beacon — shared context (read before any task)
+# BigYellow Beacon POC — read before any task
+
+## Source of truth (in this order)
+1. `docs/TECHNICAL_DESIGN.md`: Kundan's POC design (architecture, features, data model, APIs, AI, sync, security, demo). Section numbers below (§) refer to it.
+2. `docs/DECISIONS.md`: defaults where the design is silent or inconsistent. Overrides older material.
+3. `contract/beacon_contract/`: the **frozen v1.0 payload contract** (Pydantic). Every request/response body and every sync payload must be one of these models. Do **not** redefine payload shapes elsewhere; import them. Don't edit `contract/` unless the task explicitly says so.
+4. `docs/PLAN.md`: hackathon plan, scope tiers P0/P1/P2, owners, milestones.
+
+Anything in older files (`contracts/`, old READMEs, earlier rules) that disagrees with these is obsolete.
 
 ## Product in one paragraph
-BigYellow Beacon is an **offline-first AI copilot for seafarers' wellbeing and safety**, built by Bigyellowfish (BYF) for the Google Cloud AI Builder Cup 2026. Merchant ships have little or no internet. Crew use a phone app on the **ship's Wi-Fi** to (a) report hazards / near-misses by voice, photo or text in their own language, and (b) do a 60-second daily wellbeing check-in. An **edge server on the ship** runs **Gemma 3n offline** and serves the crew app and the Master's dashboard. When the ship's VSAT link is up, the edge server syncs a small delta (~1 KB) to **shore on Google Cloud**, where **Gemini** finds patterns across the fleet (e.g. the same crane hydraulic leak on 3 sister vessels), links them to past accident cases, and sends fleet alerts and an enriched morning brief back to the ship.
+Beacon is an offline-first AI copilot for seafarers' safety and wellbeing, built for the **Google Cloud AI Builder Cup 2026**. On the ship, crew and Master use **one React PWA** served by an **edge server** over the ship LAN (HTTPS via mkcert). Crew report near-misses by voice/photo/text in any language; **Gemma** (Ollama) on the edge structures and translates them; the Master gets an **SSE alert** within a second and acts on board. A transactional outbox syncs **kilobyte deltas** to **shore-api on Cloud Run** when the (simulated) VSAT link is up. Shore reviewers use the **Beacon Dashboard**: **Gemini on Vertex AI** analyses each ticket (similar tickets across the fleet + accident-corpus match), reviewers Accept/Reject, reply anonymously, and publish **microlearnings** back to one, some or all vessels.
 
-## Three kinds of users
-| User | App | Talks to |
+## Users (§5)
+| Role | App | Login |
 |---|---|---|
-| Crew member (`crew`) | Android app (`mobile/android`, built in Codex) | Edge server only |
-| Master / Safety Officer (`master`, `safety_officer`) | Ship dashboard (`dashboards/ship-web`), served by the edge server on the ship LAN | Edge server only |
-| Shore management (`shore_safety`, `shore_psych`, `admin`) | Shore dashboard (`dashboards/shore-web`) on Firebase Hosting | Shore API |
+| `crew` | Crew app, crew view | QR pairing + 4-digit PIN |
+| `master` (incl. Safety Officer) | Crew app, Master view | QR pairing + 6-digit PIN (first Master: `make pair-master`) |
+| `shore_reviewer`, `shore_admin` | Beacon Dashboard | email + password (JWT) |
+| `vessel` (edge device) | shore sync routes | vessel API key + HMAC signature |
 
-## Architecture
+There is **no native mobile app** and **no psychologist/escalation role**.
+
+## Non-negotiable rules
+1. **Ship works offline.** Nothing on the edge or in the crew app may need the internet at runtime: no CDNs, remote fonts or cloud calls. Models are pulled before the voyage.
+2. **Identity never leaves the ship.** Names, crew IDs, device IDs, PINs, audio and transcripts stay on the edge. Shore gets a per-ticket `reporter_ref` (`beacon_contract.security.reporter_ref`), rank band (collapsed to `crew` when < 5 on the vessel), vessel. `SyncDelta` validation rejects forbidden keys; never bypass it.
+3. **Scrub before push.** Every free-text field goes through `beacon_contract.privacy.scrub_text(text, roster_names)` before it is written to the outbox. Strip photo EXIF on upload.
+4. **Check-in transcripts are never written** to disk, DB or logs. Only scores. Individual scores stay on the edge and are visible only to that crew member.
+5. **k ≥ 5** for any wellbeing number shown to the Master or sent to shore (`beacon_contract.privacy.K_ANON`).
+6. **Safety rails** run before and after every model call on crew text. On a hit: no model call (or discard output), show the fixed placeholder message, offer "Would you like the Master to check on you?". Welfare alert to the Master = name + time only. Nothing to shore. Rail hits are counted on the edge only.
+7. **Never log** report text, check-in text or request bodies. Log IDs, routes, status, latency, rule IDs.
+8. **AI suggests, humans decide.** Every model output is validated against a contract model (1 retry with the validation error, then fallback). AI-generated content is labelled with model + time. Nothing auto-applies to a ticket's official fields without a human click.
+9. **Field ownership in sync.** Edge owns `onboard_status` and report fields; shore owns `shore_status`, `reject_*`, `assigned_to`. Each side sends only what it owns.
+
+## Demo data (fixed IDs; see `seed/`)
+- Vessels: `v-0007` MV Demo Star (live demo ship, code `0007`), `v-0003` MV Sister One, `v-0005` MV Sister Two.
+- Roster `seed/crew_v-0007.json`: Master `c-0007-mst`, Safety Officer `c-0007-cof`, demo reporter `c-0007-aru` (Hindi).
+- Demo report (Hindi): "क्रेन के पास हाइड्रोलिक लीक पर मैं फिर से फिसलते-फिसलते बचा।" → slip_trip_fall / unsafe_condition / severity 3, clarifying question "Which crane, and which side of the deck?".
+- Shore seed `seed/shore_tickets.json` has two crane-leak tickets on sister vessels and `BCN-0007-0011` (the duplicate for the Reject path). Corpus `seed/accident_corpus.jsonl` (`SYN-ACC-001` must match).
+- Contract fixtures for the whole scenario: `contract/generated/fixtures/*.json` (regenerate with `python -m beacon_contract.export`).
+- GCP: project `byf-beacon-2026`, region **asia-southeast1**.
+
+## Repo layout (§17)
 ```
-Crew app ──ship Wi-Fi──▶ EDGE (FastAPI + Gemma 3n + faster-whisper + EmbeddingGemma + Postgres/pgvector)
-Ship dashboard ──LAN──▶ EDGE (same origin, served at /)
-EDGE sync worker ──VSAT, only when up──▶ SHORE shore-api (Cloud Run) ──▶ Firestore (+ vector search), Gemini (Vertex AI), Cloud Storage
-Shore dashboard (Firebase Hosting + Firebase Auth) ──▶ shore-api
-```
-Everything on the ship must keep working with the link down. The **only** thing crossing ship↔shore is the sync worker.
-
-## Repo layout
-```
-bigyellow-beacon/
-├── contracts/            # SINGLE SOURCE OF TRUTH — do not change without telling the team
-│   ├── schemas/          # near_miss, checkin, sync_delta, master_brief (JSON Schema 2020-12)
-│   ├── api/edge-crew-api.md   # exact crew-app ↔ edge API (the Android app is built against this)
-│   ├── safety/           # rails.py + lexicon.json (placeholder text, pending clinician review)
-│   ├── prompts/          # Gemma prompts: near_miss_extraction.md, checkin_system.md
-│   ├── eval/             # gold near-miss set + run_eval.py
-│   ├── seed/             # demo near-misses (2 sister vessels + the live demo record), accident corpus sample
-│   └── tests/            # pytest for schemas + rails
-├── edge/                 # ship server (FastAPI) + model-server + sync worker
-├── shore/                # Cloud Run FastAPI + Firestore + Gemini
-├── dashboards/           # ship-web (offline) + shore-web (Firebase Hosting)
-├── mobile/android/       # crew app (Codex; its AGENTS.md has the full app spec)
-└── docs/architecture.html
+contract/            beacon_contract (Pydantic) + generated/{schemas,fixtures}   ← frozen v1.0
+edge/                FastAPI edge server  (app/{auth,reports,master,events,ai,safety,checkin,learnings,inbox,outbox,sync,admin,daily_anchor})
+shore/               FastAPI shore-api for Cloud Run (app/{auth,sync,tickets,ai,learnings,media,fleet,anchor})
+web/                 pnpm workspace: packages/ui, apps/crew (PWA: crew + Master), apps/dashboard
+seed/                synthetic vessels, roster, shore tickets, accident corpus, anchor seed pack
+scripts/             mkcert setup, demo reset, link toggle
+docs/                TECHNICAL_DESIGN.md, DECISIONS.md, PLAN.md
 ```
 
-## Non-negotiable rules (apply everywhere)
-1. **Offline on the ship.** Nothing in `edge/` or `dashboards/ship-web/` may need the internet at runtime: no CDNs, no remote fonts, no cloud APIs, models pre-downloaded.
-2. **No crew identity.** Never store names, crew IDs, phone numbers or emails for crew. Crew are identified only by a pseudonymous `reporter_ref` (`anon-` + hex).
-3. **Check-in transcripts are never stored server-side** (edge or shore). The edge processes them in memory and persists **scores only**. Audio from check-ins is deleted immediately after transcription.
-4. **k-anonymity = 5.** Any wellbeing aggregate built from fewer than 5 distinct `reporter_ref` is suppressed (values `null`, `suppressed: true`) — on the ship dashboard and on shore.
-5. **Escalations** (consented "talk to someone") go to the **shore psych team only**. The Master sees only `medical` help requests.
-6. **Safety rails** (`contracts/safety`) run **before and after every model call** that touches crew free text. When they fire, the model output is discarded and the fixed response is returned. The fixed responses are placeholders: keep the `[PLACEHOLDER …]` marker visible.
-7. **Never log user text** (reports, check-ins) or request bodies. Log IDs, routes, status codes, latencies.
-8. **AI decides wording, code decides facts.** Clustering, counts, k-anonymity and thresholds are deterministic code. LLMs extract, translate, summarise and explain, and every LLM output that drives UI is validated against a JSON schema.
-
-## Shared vocabulary (must match `contracts/schemas/near_miss.schema.json`)
-- `hazard_type`: `slip_trip_fall, ladder_access, lifting_crane_ops, mooring_ops, machinery_hydraulic, enclosed_space_atmosphere, fire_electrical, cargo_chemical_handling, other` (TODO: replace with the 6–7 cause categories from BYF's 250+ accident corpus — change it in the schema only, and everything else must read the enum from the schema)
-- `location.area`: see schema enum (`crane_area`, `accommodation_ladder`, `engine_room`, `mooring_station`, …)
-- `severity.level`: `low | medium | high | critical`
-- `ism_report_type`: `near_miss | hazardous_situation | non_conformity | accident`
-- `rank_group`: `deck_officer | engine_officer | deck_rating | engine_rating | catering | cadet | undisclosed`
-- Languages for the demo: `hi` (Hindi), `tl` (Tagalog), `en`. BCP-47 tags in APIs.
-
-## Demo data (use these exact IDs)
-- Demo vessel: `VSL-DEMO01` "MV Demo Star" (the ship in the live demo; edge server runs on a laptop at `192.168.1.10:8080`)
-- Sister vessels (shore seed only): `VSL-SISTER01` "MV Sister One", `VSL-SISTER02` "MV Sister Two", same fleet `FLEET-BYF-DEMO`
-- Live demo report (Hindi): "क्रेन के पास हाइड्रोलिक लीक पर मैं फिर से फिसलते-फिसलते बचा।" → crane_area / slip_trip_fall / high / recurring. With the two seeded sister reports it must create a **3-vessel cluster** on shore, matched to accident case `SYN-ACC-001`.
-- GCP project: `byf-beacon-2026`, region `asia-south1` (Vertex AI location configurable; default `us-central1`).
-
-## Engineering conventions
-- Python 3.12, FastAPI, Pydantic v2, async everywhere, `ruff` + `pytest`, type hints, `pydantic-settings` for config. Every service has `/api/v1/health`.
-- Validate inbound/outbound payloads against `contracts/schemas` with `jsonschema` (Draft 2020-12) where a schema exists; Pydantic models must mirror the schemas.
-- TypeScript strict, React 18 + Vite for dashboards.
-- Times are UTC ISO-8601 (`2026-10-17T05:40:00Z`). IDs are UUID v4 unless stated.
-- Error body everywhere: `{"error": {"code": "snake_case", "message": "human text"}}`.
-- Write-endpoints accept a client `client_id` / `delta_id` for idempotency.
-- Prefer small, working, demoable slices over completeness. When the spec is ambiguous, pick the option that **works offline, stores less personal data and is simpler to demo**, and leave a `# DECISION:` comment.
+## Conventions
+- Python 3.12 (contract supports ≥ 3.11), FastAPI, Pydantic v2, SQLAlchemy 2 async + Alembic, `pytest`, `ruff`. Install the contract editable in each service: `pip install -e ../contract`.
+- IDs: UUIDv7 (`beacon_contract.uuid7()`) generated where the record is born. Ticket numbers `BCN-<vessel code>-<seq>`.
+- Times UTC ISO-8601. Ship-local date only for check-ins and Daily Anchor.
+- Writes accept `Idempotency-Key` (edge) / `event_id` (sync); duplicates return the original result.
+- Errors: `{"error": {"code": "snake_case", "message": "..."}}`.
+- AI access only through the gateway interfaces (`edge/app/ai/gateway.py`, `shore/app/ai/gateway.py`) with a Fake implementation returning contract fixtures. Switch with `BEACON_AI=fake|ollama`, `SHORE_AI=fake|vertex`.
+- Prompts versioned at `prompts/<task>/v<n>.md`; store `prompt_version` with every output.
+- Prefer a small slice that works end to end over breadth. Work to the P0 list in `docs/PLAN.md` first. When the spec is ambiguous, pick what works offline, stores less personal data and is simpler to demo, and leave a `# DECISION:` comment.

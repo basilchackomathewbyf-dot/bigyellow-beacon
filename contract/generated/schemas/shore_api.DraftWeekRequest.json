@@ -1,0 +1,99 @@
+{
+  "$defs": {
+    "AnchorType": {
+      "enum": [
+        "motivation",
+        "safety",
+        "news"
+      ],
+      "title": "AnchorType",
+      "type": "string"
+    },
+    "NewsItem": {
+      "additionalProperties": false,
+      "properties": {
+        "source_name": {
+          "title": "Source Name",
+          "type": "string"
+        },
+        "url": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Url"
+        },
+        "title": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Title"
+        },
+        "text": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Text"
+        }
+      },
+      "required": [
+        "source_name"
+      ],
+      "title": "NewsItem",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "start_date": {
+      "format": "date",
+      "title": "Start Date",
+      "type": "string"
+    },
+    "mix": {
+      "additionalProperties": {
+        "type": "integer"
+      },
+      "default": {
+        "motivation": 3,
+        "safety": 3,
+        "news": 1
+      },
+      "propertyNames": {
+        "$ref": "#/$defs/AnchorType"
+      },
+      "title": "Mix",
+      "type": "object"
+    },
+    "news_items": {
+      "default": [],
+      "items": {
+        "$ref": "#/$defs/NewsItem"
+      },
+      "title": "News Items",
+      "type": "array"
+    }
+  },
+  "required": [
+    "start_date"
+  ],
+  "title": "DraftWeekRequest",
+  "type": "object"
+}

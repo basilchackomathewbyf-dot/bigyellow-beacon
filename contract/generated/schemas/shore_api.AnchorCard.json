@@ -1,0 +1,130 @@
+{
+  "$defs": {
+    "AnchorStatus": {
+      "enum": [
+        "draft",
+        "approved",
+        "retracted"
+      ],
+      "title": "AnchorStatus",
+      "type": "string"
+    },
+    "AnchorType": {
+      "enum": [
+        "motivation",
+        "safety",
+        "news"
+      ],
+      "title": "AnchorType",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "card_id": {
+      "maxLength": 64,
+      "minLength": 1,
+      "title": "Card Id",
+      "type": "string"
+    },
+    "publish_date": {
+      "format": "date",
+      "title": "Publish Date",
+      "type": "string"
+    },
+    "type": {
+      "$ref": "#/$defs/AnchorType"
+    },
+    "title": {
+      "additionalProperties": {
+        "type": "string"
+      },
+      "title": "Title",
+      "type": "object"
+    },
+    "body": {
+      "additionalProperties": {
+        "type": "string"
+      },
+      "title": "Body",
+      "type": "object"
+    },
+    "source_name": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Source Name"
+    },
+    "source_url": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Source Url"
+    },
+    "image_uri": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Image Uri"
+    },
+    "audience": {
+      "anyOf": [
+        {
+          "const": "all",
+          "type": "string"
+        },
+        {
+          "items": {
+            "maxLength": 64,
+            "minLength": 1,
+            "type": "string"
+          },
+          "type": "array"
+        }
+      ],
+      "default": "all",
+      "title": "Audience"
+    },
+    "status": {
+      "$ref": "#/$defs/AnchorStatus",
+      "default": "draft"
+    },
+    "ai_drafted": {
+      "default": false,
+      "title": "Ai Drafted",
+      "type": "boolean"
+    },
+    "is_seed": {
+      "default": false,
+      "title": "Is Seed",
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "card_id",
+    "publish_date",
+    "type",
+    "title",
+    "body"
+  ],
+  "title": "AnchorCard",
+  "type": "object"
+}

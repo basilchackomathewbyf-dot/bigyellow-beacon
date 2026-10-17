@@ -1,0 +1,44 @@
+{
+  "$defs": {
+    "SseEvent": {
+      "enum": [
+        "ticket.new",
+        "ticket.updated",
+        "message.new",
+        "learning.new",
+        "sync.status",
+        "brief.updated",
+        "anchor.new",
+        "checkin.reminder",
+        "welfare.request"
+      ],
+      "title": "SseEvent",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "description": "Wire format: `id: <id>\\nevent: <event>\\ndata: <json>\\n\\n`. Clients resume with Last-Event-ID.",
+  "properties": {
+    "id": {
+      "maxLength": 64,
+      "minLength": 1,
+      "title": "Id",
+      "type": "string"
+    },
+    "event": {
+      "$ref": "#/$defs/SseEvent"
+    },
+    "data": {
+      "additionalProperties": true,
+      "title": "Data",
+      "type": "object"
+    }
+  },
+  "required": [
+    "id",
+    "event",
+    "data"
+  ],
+  "title": "SseMessage",
+  "type": "object"
+}

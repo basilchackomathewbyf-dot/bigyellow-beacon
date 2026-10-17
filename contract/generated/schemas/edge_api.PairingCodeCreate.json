@@ -1,0 +1,16 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "crew_id": {
+      "maxLength": 64,
+      "minLength": 1,
+      "title": "Crew Id",
+      "type": "string"
+    }
+  },
+  "required": [
+    "crew_id"
+  ],
+  "title": "PairingCodeCreate",
+  "type": "object"
+}

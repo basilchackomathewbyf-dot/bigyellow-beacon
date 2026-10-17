@@ -1,0 +1,29 @@
+{
+  "draft_id": "0192f0c2-79f0-7a2b-8c11-1f2e3d4c0001",
+  "original_language": "hi",
+  "transcript_original": "क्रेन के पास हाइड्रोलिक लीक पर मैं फिर से फिसलते-फिसलते बचा।",
+  "fields": {
+    "title_en": "Slipped on hydraulic leak near deck crane",
+    "description_en": "Reporter nearly slipped on hydraulic oil near the deck crane. It has happened before.",
+    "location_on_board": null,
+    "hazard_type": "slip_trip_fall",
+    "ism_category": "unsafe_condition",
+    "severity": 3,
+    "immediate_action": null,
+    "occurred_at": null
+  },
+  "clarifying_question": {
+    "en": "Which crane, and which side of the deck?",
+    "hi": "कौन सी क्रेन, और डेक का कौन सा हिस्सा?"
+  },
+  "confidence": 0.82,
+  "similar_open_ticket": null,
+  "safety": {
+    "rail_hit": false,
+    "category": null,
+    "fixed_message": null,
+    "offer_welfare": false
+  },
+  "prompt_version": "structure/v1",
+  "model": "gemma3n:e4b"
+}

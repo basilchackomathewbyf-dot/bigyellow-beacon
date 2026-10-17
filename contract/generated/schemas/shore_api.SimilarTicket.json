@@ -1,0 +1,36 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "ticket_id": {
+      "maxLength": 64,
+      "minLength": 1,
+      "title": "Ticket Id",
+      "type": "string"
+    },
+    "ticket_no": {
+      "title": "Ticket No",
+      "type": "string"
+    },
+    "vessel_name": {
+      "title": "Vessel Name",
+      "type": "string"
+    },
+    "title_en": {
+      "title": "Title En",
+      "type": "string"
+    },
+    "score": {
+      "title": "Score",
+      "type": "number"
+    }
+  },
+  "required": [
+    "ticket_id",
+    "ticket_no",
+    "vessel_name",
+    "title_en",
+    "score"
+  ],
+  "title": "SimilarTicket",
+  "type": "object"
+}

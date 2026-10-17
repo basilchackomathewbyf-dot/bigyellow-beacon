@@ -1,0 +1,16 @@
+[project]
+name = "beacon-contract"
+version = "1.0.0"
+description = "BigYellow Beacon shared payload contract (edge, shore, web)"
+requires-python = ">=3.11"
+dependencies = ["pydantic>=2.6"]
+
+[project.optional-dependencies]
+dev = ["pytest>=8"]
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+include = ["beacon_contract*"]

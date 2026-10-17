@@ -1,0 +1,15 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "consent": {
+      "const": true,
+      "title": "Consent",
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "consent"
+  ],
+  "title": "WelfareRequestCreate",
+  "type": "object"
+}

@@ -1,0 +1,16 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "resolution_note": {
+      "maxLength": 1000,
+      "minLength": 1,
+      "title": "Resolution Note",
+      "type": "string"
+    }
+  },
+  "required": [
+    "resolution_note"
+  ],
+  "title": "CloseRequest",
+  "type": "object"
+}

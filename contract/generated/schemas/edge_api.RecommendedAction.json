@@ -1,0 +1,32 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "action": {
+      "maxLength": 200,
+      "minLength": 1,
+      "title": "Action",
+      "type": "string"
+    },
+    "why": {
+      "title": "Why",
+      "type": "string"
+    },
+    "evidence_ticket_ids": {
+      "items": {
+        "maxLength": 64,
+        "minLength": 1,
+        "type": "string"
+      },
+      "minItems": 1,
+      "title": "Evidence Ticket Ids",
+      "type": "array"
+    }
+  },
+  "required": [
+    "action",
+    "why",
+    "evidence_ticket_ids"
+  ],
+  "title": "RecommendedAction",
+  "type": "object"
+}

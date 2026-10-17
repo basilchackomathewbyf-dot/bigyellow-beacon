@@ -1,0 +1,95 @@
+{
+  "$defs": {
+    "ActionType": {
+      "enum": [
+        "ack",
+        "action",
+        "resolve",
+        "note"
+      ],
+      "title": "ActionType",
+      "type": "string"
+    },
+    "ActorRole": {
+      "enum": [
+        "master",
+        "shore",
+        "system"
+      ],
+      "title": "ActorRole",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "action_id": {
+      "maxLength": 64,
+      "minLength": 1,
+      "title": "Action Id",
+      "type": "string"
+    },
+    "ticket_id": {
+      "maxLength": 64,
+      "minLength": 1,
+      "title": "Ticket Id",
+      "type": "string"
+    },
+    "actor_role": {
+      "$ref": "#/$defs/ActorRole"
+    },
+    "action_type": {
+      "$ref": "#/$defs/ActionType"
+    },
+    "text": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Text"
+    },
+    "responsible_rank": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Responsible Rank"
+    },
+    "due_at": {
+      "anyOf": [
+        {
+          "format": "date-time",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Due At"
+    },
+    "created_at": {
+      "format": "date-time",
+      "title": "Created At",
+      "type": "string"
+    }
+  },
+  "required": [
+    "action_id",
+    "ticket_id",
+    "actor_role",
+    "action_type",
+    "created_at"
+  ],
+  "title": "TicketActionView",
+  "type": "object"
+}

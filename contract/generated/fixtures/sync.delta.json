@@ -1,0 +1,71 @@
+{
+  "vessel_id": "v-0007",
+  "batch_id": "0192f0c3-0000-7000-8000-000000000001",
+  "contract_version": "1.0",
+  "events": [
+    {
+      "event_id": "0192f0c3-0000-7000-8000-0000000000e1",
+      "entity": "ticket",
+      "op": "insert",
+      "entity_id": "0192f0c2-7a10-7c4e-9a51-3d0b6f8e0001",
+      "version": 3,
+      "occurred_at": "2026-10-18T05:40:00Z",
+      "owned_fields": {
+        "ticket_no": "BCN-0007-0012",
+        "vessel_id": "v-0007",
+        "reporter_ref": "rr_658511d5e17eb037b75ee13991c25b4a",
+        "rank_band": "rating",
+        "title_en": "Slipped on hydraulic leak near deck crane",
+        "description_en": "Reporter nearly slipped on hydraulic oil near the deck crane. It has happened before.",
+        "description_original": "क्रेन के पास हाइड्रोलिक लीक पर मैं फिर से फिसलते-फिसलते बचा।",
+        "original_language": "hi",
+        "location_on_board": "Main deck, crane no. 2, starboard",
+        "hazard_type": "slip_trip_fall",
+        "ism_category": "unsafe_condition",
+        "severity": 3,
+        "immediate_action": null,
+        "occurred_at": null,
+        "created_at": "2026-10-18T05:40:00Z",
+        "onboard_status": "ACTION_IN_PROGRESS",
+        "media_count": 1
+      },
+      "payload": null
+    },
+    {
+      "event_id": "0192f0c3-0000-7000-8000-0000000000e2",
+      "entity": "ticket_action",
+      "op": "insert",
+      "entity_id": "0192f0c3-0000-7000-8000-0000000000a1",
+      "version": 1,
+      "occurred_at": "2026-10-18T05:40:00Z",
+      "owned_fields": null,
+      "payload": {
+        "action_id": "0192f0c3-0000-7000-8000-0000000000a1",
+        "ticket_id": "0192f0c2-7a10-7c4e-9a51-3d0b6f8e0001",
+        "actor_role": "master",
+        "action_type": "action",
+        "text": "Isolate crane 2, clean deck",
+        "responsible_rank": "Bosun",
+        "due_at": null,
+        "created_at": "2026-10-18T05:40:00Z"
+      }
+    },
+    {
+      "event_id": "0192f0c3-0000-7000-8000-0000000000e3",
+      "entity": "checkin_aggregate",
+      "op": "upsert",
+      "entity_id": "v-0007:2026-10-18",
+      "version": 1,
+      "occurred_at": "2026-10-18T05:40:00Z",
+      "owned_fields": null,
+      "payload": {
+        "vessel_id": "v-0007",
+        "date": "2026-10-18",
+        "n": 9,
+        "mood_avg": 3.2,
+        "fatigue_avg": 3.9,
+        "workload_avg": 3.6
+      }
+    }
+  ]
+}

@@ -1,0 +1,101 @@
+---
+description: Beacon AI (Engineer 2, Sumit) — Gemma/Ollama, faster-whisper, EmbeddingGemma, safety rails, check-in, morning brief on the edge; Gemini on Vertex AI for analysis, learnings, enrichment, Daily Anchor on shore. Use for edge/app/ai, edge/app/safety, edge/prompts, shore/app/ai, shore/prompts.
+globs: edge/app/ai/**, edge/app/safety/**, edge/prompts/**, shore/app/ai/**, shore/prompts/**
+alwaysApply: false
+---
+
+# AI spec
+
+Read `00-beacon-shared.mdc`, then `docs/TECHNICAL_DESIGN.md` §14 (model tasks, prompt rules, safety rails) and §6.4. Gemma does everything that touches a crew member, offline. Gemini does everything that needs the fleet view.
+
+## 1. Rules for every model call
+- Output is validated against a `beacon_contract` model. On failure: retry once with the validation error appended ("Your JSON was invalid: …. Return corrected JSON only."), then fall back (manual form / deterministic output).
+- Prompts live in `prompts/<task>/v<n>.md` with `{placeholders}`; enums are injected **from `beacon_contract.enums`**, never hard-coded. Store `prompt_version` and `model` with every output.
+- System prompt fixes the role, the enums, the severity rubric (`SEVERITY_RUBRIC`) and "if unsure, return null, never guess".
+- Gemini prompts never receive `reporter_ref`, names or any crew identifier.
+- Never log prompts or outputs that contain crew text.
+
+## 2. Edge models (Ollama + faster-whisper), test FIRST (milestone A1)
+```
+ollama pull gemma3n:e4b        # main text model
+ollama pull gemma3n:e2b        # fallback if e4b is slow on the demo laptop
+ollama pull gemma3:4b          # photo captions if gemma3n image input fails under Ollama (DECISIONS A13)
+ollama pull embeddinggemma     # 768-dim embeddings
+pip install faster-whisper     # model "small", multilingual, int8 on CPU
+```
+Write `edge/app/ai/model_check.py` that prints a table: Gemma 3n JSON structuring on the Hindi demo sentence (latency, valid?), Gemma 3n image caption on a deck photo (works?), gemma3:4b image caption, whisper `small` on a recorded Hindi clip (text, language, latency), embeddinggemma dimension. **Pin the tags that work** in `edge/.env.example`. Keep models warm with `keep_alive: "30m"`.
+
+## 3. Edge gateway (`edge/app/ai/gateway.py`): the seam with Basil
+Basil writes the `Protocol` + `FakeAIGateway`; you write `OllamaGateway`. Keep these signatures:
+```python
+class AIGateway(Protocol):
+    async def transcribe(self, audio_path: Path, lang_hint: str | None) -> Transcript   # {text, language, avg_logprob}
+    async def caption_photos(self, photo_paths: list[Path]) -> PhotoCaptions            # {caption, visible_hazards[]}
+    async def structure_report(self, text: str, language: str, captions: PhotoCaptions | None,
+                               location_hints: list[str]) -> StructureResult             # fields: StructuredFields, clarifying_question, confidence, original_language
+    async def answer_clarification(self, prior: StructureResult, question: str, answer: str) -> StructureResult
+    async def checkin_turn(self, history: list[Turn], language: str) -> CheckinTurnResult  # {reply, done, scores?}
+    async def checkin_after(self, scores: CheckinScores, tags: list[str], language: str) -> CheckinAfter
+    async def morning_brief(self, ctx: BriefContext) -> MorningBrief
+    async def mood_insight(self, entries: list[MoodEntry], language: str) -> MoodInsight | None
+    async def translate(self, text: str, src: str, tgt: str) -> str
+    async def embed(self, texts: list[str]) -> list[list[float]]
+```
+Small internal types (`Transcript`, `PhotoCaptions`, `StructureResult`, `Turn`, `CheckinTurnResult`, `BriefContext`) live in `edge/app/ai/types.py`; everything user-facing uses contract models.
+
+## 4. Edge tasks (§14.1)
+| Task | Model / settings | Notes |
+|---|---|---|
+| Speech to text | faster-whisper small | Delete audio after; never log text |
+| Photo captions | Gemma vision tag (A13) | ≤ 3 photos, resized 1280 px |
+| Structure + translate | Gemma, Ollama `format` = JSON schema of `StructuredFields`, temperature 0.2 | Inputs: transcript, text, captions, vessel location hints. Output `StructuredFields` + `clarifying_question` (`{"en":…, "<lang>":…}`) when any core field is null or confidence < 0.7. One clarifying question max per answer, two rounds max. |
+| Local dedup | EmbeddingGemma on `title_en + description_en` | cosine > 0.85 within 7 days → `similar_open_ticket` |
+| Check-in chat | Gemma, temperature 0.5 | 2–3 turns, then `{done: true, scores: {mood, fatigue, workload} 1–5}`. Transcript in memory only. |
+| After check-in | Gemma | one supportive line + one practical tip, rail-checked |
+| Morning brief | Gemma → `MorningBrief` | inputs: open tickets, actions, aggregates (k ≥ 5 only), latest `brief_enrichment`. Deterministic fallback when the model fails. |
+| Mood insight (P2) | Gemma → `MoodInsight` | own last 30 entries only; never synced |
+
+**Eval** (milestone A2): port the old gold set to `edge/eval/near_miss_eval.jsonl` with the new enums (hazard types renamed: `enclosed_space_atmosphere→enclosed_space`, `cargo_chemical_handling→cargo_chemical`; location is now free text, so score it by keyword). Include the exact demo sentence. Target: hazard_type ≥ 0.8, valid JSON 100% after retry. `make eval`.
+
+## 5. Safety rails (`edge/app/safety/`)
+- Rules: `edge/app/safety/rules/lexicon.json` (categories = `beacon_contract.enums.RailCategory`; placeholder text; helpline placeholder). Hot-reload when a `rail_update` pull arrives.
+- `check_input(text, lang) -> SafetyOutcome` before every model call on crew text (check-in and near-miss free text). Hit → no model call, `fixed_message` in the crew's language with on-board contacts + helpline, `offer_welfare=True` for self_harm / harm_to_others.
+- `check_output(model_text, crew_text, lang)` after every call: re-check crew text + deny-list (diagnosis words, medication advice, method talk). Hit → replace with the fixed message.
+- Count hits as `rail_hits(rule_id, ship_date)` on the edge only. Never text, never identity, never synced.
+- Tests: Hindi + English crisis phrases fire; "the engine died" does not; model never called on a hit; deny-listed output replaced.
+
+## 6. Shore (Gemini on Vertex AI, `shore/app/ai/`)
+```python
+from google import genai
+client = genai.Client(vertexai=True, project="byf-beacon-2026", location="asia-southeast1")  # if a model is not offered in-region, set SHORE_VERTEX_LOCATION=global
+resp = client.models.generate_content(model=settings.gemini_model, contents=prompt,
+        config={"response_mime_type": "application/json", "response_schema": AnalysisLLMOutput, "temperature": 0.2})
+out = AnalysisLLMOutput.model_validate_json(resp.text)
+```
+If the SDK rejects the Pydantic schema (e.g. `additionalProperties`), pass `response_json_schema=Model.model_json_schema()` instead, or strip `additionalProperties` before passing. Model names come from settings (`SHORE_GEMINI_MODEL`, default `gemini-2.5-flash`; check the Vertex model list and use the newest GA Flash).
+
+`shore/app/ai/gateway.py`: `Protocol` + `FakeGemini` (returns `beacon_contract.fixtures`) + `VertexGemini`, chosen by `SHORE_AI`.
+
+| Task | Output model | Inputs |
+|---|---|---|
+| Ticket analysis (on arrival, re-runnable) | `AnalysisLLMOutput` → stored as `AiAnalysis` | ticket fields + actions + top-5 similar tickets + top-3 corpus cases (ids given; reasons must cite only those ids) |
+| Embeddings | 768-dim (`gemini-embedding-001`, `output_dimensionality=768`, or `text-embedding-005`) | `title_en + description_en`; corpus `title + summary` |
+| Microlearning draft | `LearningDraftLLMOutput` | ticket + analysis; no vessel or reporter detail |
+| Brief enrichment | `BriefEnrichmentChange.fleet_context` (2–3 lines) | vessel's open tickets + matching fleet clusters |
+| Cluster labels (P1) | short label | ticket titles in the cluster |
+| Daily Anchor week (P2) | 7 × `AnchorDraftLLMOutput` | mix, clusters, editor-pasted news only (no scraping) |
+| Daily Anchor translation (P2) | `{lang: {title, body}}` | approved card |
+
+Every shore output stored with `model`, `prompt_version`, `created_at`, labelled "AI generated" in the UI.
+
+## 7. Milestones
+| ID | Scope | Done when |
+|---|---|---|
+| A1 | Model test matrix, tags pinned | table committed in `edge/app/ai/MODELS.md` |
+| A2 | `OllamaGateway.transcribe/caption/structure/answer` + eval | demo sentence → correct draft + clarifying question in ≤ 15 s on the demo laptop; eval targets met |
+| A3 | Safety rails pre/post + tests | tests green |
+| A4 | `BEACON_AI=ollama` end to end with Basil's routes | phone → real Gemma draft |
+| A5 | Shore `VertexGemini.analyse` + embeddings + corpus match | seeded crane tickets + `SYN-ACC-001` appear in the analysis for the demo ticket |
+| A6 | Learning draft + brief enrichment | studio "Draft with AI" fills all fields; brief shows fleet context after pull |
+| A7 (P1) | Check-in chat + after-tip + morning brief via Gemma | quick + chat check-in work, brief regenerates |
+| A8 (P2) | Mood insight, cluster labels, Anchor week draft + translation | |

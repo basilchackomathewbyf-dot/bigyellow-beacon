@@ -1,0 +1,56 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "vessel_id": {
+      "maxLength": 64,
+      "minLength": 1,
+      "title": "Vessel Id",
+      "type": "string"
+    },
+    "date": {
+      "format": "date",
+      "title": "Date",
+      "type": "string"
+    },
+    "n": {
+      "minimum": 5,
+      "title": "N",
+      "type": "integer"
+    },
+    "mood_avg": {
+      "maximum": 5,
+      "minimum": 1,
+      "title": "Mood Avg",
+      "type": "number"
+    },
+    "fatigue_avg": {
+      "maximum": 5,
+      "minimum": 1,
+      "title": "Fatigue Avg",
+      "type": "number"
+    },
+    "workload_avg": {
+      "anyOf": [
+        {
+          "maximum": 5,
+          "minimum": 1,
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Workload Avg"
+    }
+  },
+  "required": [
+    "vessel_id",
+    "date",
+    "n",
+    "mood_avg",
+    "fatigue_avg"
+  ],
+  "title": "CheckinAggregatePayload",
+  "type": "object"
+}

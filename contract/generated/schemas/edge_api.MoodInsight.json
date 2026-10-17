@@ -1,0 +1,19 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "insight": {
+      "title": "Insight",
+      "type": "string"
+    },
+    "tip": {
+      "title": "Tip",
+      "type": "string"
+    }
+  },
+  "required": [
+    "insight",
+    "tip"
+  ],
+  "title": "MoodInsight",
+  "type": "object"
+}

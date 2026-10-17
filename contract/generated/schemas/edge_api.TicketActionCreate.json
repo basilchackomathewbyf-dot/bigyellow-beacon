@@ -1,0 +1,46 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "text": {
+      "maxLength": 4000,
+      "minLength": 1,
+      "title": "Text",
+      "type": "string"
+    },
+    "responsible_rank": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Responsible Rank"
+    },
+    "due_at": {
+      "anyOf": [
+        {
+          "format": "date-time",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Due At"
+    },
+    "resolve": {
+      "default": false,
+      "title": "Resolve",
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "text"
+  ],
+  "title": "TicketActionCreate",
+  "type": "object"
+}

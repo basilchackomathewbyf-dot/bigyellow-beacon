@@ -1,0 +1,84 @@
+{
+  "$defs": {
+    "QrPayload": {
+      "additionalProperties": false,
+      "description": "Encoded in the pairing QR. One code pairs one roster member's device.",
+      "properties": {
+        "v": {
+          "const": 1,
+          "default": 1,
+          "title": "V",
+          "type": "integer"
+        },
+        "edge_url": {
+          "title": "Edge Url",
+          "type": "string"
+        },
+        "vessel_id": {
+          "maxLength": 64,
+          "minLength": 1,
+          "title": "Vessel Id",
+          "type": "string"
+        },
+        "vessel_name": {
+          "title": "Vessel Name",
+          "type": "string"
+        },
+        "code": {
+          "pattern": "^[A-Z0-9]{4}-[A-Z0-9]{4}$",
+          "title": "Code",
+          "type": "string"
+        },
+        "crew_id": {
+          "maxLength": 64,
+          "minLength": 1,
+          "title": "Crew Id",
+          "type": "string"
+        }
+      },
+      "required": [
+        "edge_url",
+        "vessel_id",
+        "vessel_name",
+        "code",
+        "crew_id"
+      ],
+      "title": "QrPayload",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "code": {
+      "title": "Code",
+      "type": "string"
+    },
+    "crew_id": {
+      "maxLength": 64,
+      "minLength": 1,
+      "title": "Crew Id",
+      "type": "string"
+    },
+    "display_name": {
+      "title": "Display Name",
+      "type": "string"
+    },
+    "qr_payload": {
+      "$ref": "#/$defs/QrPayload"
+    },
+    "expires_at": {
+      "format": "date-time",
+      "title": "Expires At",
+      "type": "string"
+    }
+  },
+  "required": [
+    "code",
+    "crew_id",
+    "display_name",
+    "qr_payload",
+    "expires_at"
+  ],
+  "title": "PairingCodeResponse",
+  "type": "object"
+}

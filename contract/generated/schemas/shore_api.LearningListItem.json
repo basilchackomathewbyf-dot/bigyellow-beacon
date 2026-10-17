@@ -1,0 +1,98 @@
+{
+  "$defs": {
+    "Audience": {
+      "enum": [
+        "same_vessel",
+        "selected_vessels",
+        "all_vessels"
+      ],
+      "title": "Audience",
+      "type": "string"
+    },
+    "LearningStatus": {
+      "enum": [
+        "draft",
+        "published",
+        "retracted"
+      ],
+      "title": "LearningStatus",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "learning_id": {
+      "maxLength": 64,
+      "minLength": 1,
+      "title": "Learning Id",
+      "type": "string"
+    },
+    "title": {
+      "title": "Title",
+      "type": "string"
+    },
+    "source_ticket_id": {
+      "anyOf": [
+        {
+          "maxLength": 64,
+          "minLength": 1,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Source Ticket Id"
+    },
+    "audience": {
+      "$ref": "#/$defs/Audience"
+    },
+    "status": {
+      "$ref": "#/$defs/LearningStatus"
+    },
+    "published_at": {
+      "anyOf": [
+        {
+          "format": "date-time",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Published At"
+    },
+    "vessels_delivered": {
+      "title": "Vessels Delivered",
+      "type": "integer"
+    },
+    "vessels_total": {
+      "title": "Vessels Total",
+      "type": "integer"
+    },
+    "ack_rate": {
+      "anyOf": [
+        {
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Ack Rate"
+    }
+  },
+  "required": [
+    "learning_id",
+    "title",
+    "audience",
+    "status",
+    "vessels_delivered",
+    "vessels_total"
+  ],
+  "title": "LearningListItem",
+  "type": "object"
+}

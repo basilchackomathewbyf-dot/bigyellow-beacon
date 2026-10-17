@@ -1,0 +1,77 @@
+{
+  "$defs": {
+    "HazardType": {
+      "enum": [
+        "slip_trip_fall",
+        "fall_from_height",
+        "ladder_access",
+        "lifting_crane_ops",
+        "mooring_ops",
+        "machinery_hydraulic",
+        "enclosed_space",
+        "fire_electrical",
+        "cargo_chemical",
+        "struck_by_object",
+        "navigation",
+        "other"
+      ],
+      "title": "HazardType",
+      "type": "string"
+    },
+    "Severity": {
+      "enum": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "title": "Severity",
+      "type": "integer"
+    }
+  },
+  "additionalProperties": false,
+  "description": "Master channel. Triggers banner + sound + vibration on the Master view.",
+  "properties": {
+    "ticket_id": {
+      "maxLength": 64,
+      "minLength": 1,
+      "title": "Ticket Id",
+      "type": "string"
+    },
+    "ticket_no": {
+      "title": "Ticket No",
+      "type": "string"
+    },
+    "title_en": {
+      "title": "Title En",
+      "type": "string"
+    },
+    "severity": {
+      "$ref": "#/$defs/Severity"
+    },
+    "hazard_type": {
+      "$ref": "#/$defs/HazardType"
+    },
+    "location_on_board": {
+      "title": "Location On Board",
+      "type": "string"
+    },
+    "created_at": {
+      "format": "date-time",
+      "title": "Created At",
+      "type": "string"
+    }
+  },
+  "required": [
+    "ticket_id",
+    "ticket_no",
+    "title_en",
+    "severity",
+    "hazard_type",
+    "location_on_board",
+    "created_at"
+  ],
+  "title": "TicketNewData",
+  "type": "object"
+}

@@ -1,0 +1,45 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "opened": {
+      "anyOf": [
+        {
+          "type": "boolean"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Opened"
+    },
+    "acked": {
+      "anyOf": [
+        {
+          "type": "boolean"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Acked"
+    },
+    "check_answer": {
+      "anyOf": [
+        {
+          "maximum": 2,
+          "minimum": 0,
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Check Answer"
+    }
+  },
+  "title": "LearningAck",
+  "type": "object"
+}

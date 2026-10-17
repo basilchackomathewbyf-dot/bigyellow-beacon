@@ -1,0 +1,42 @@
+{
+  "$defs": {
+    "MediaKind": {
+      "enum": [
+        "photo",
+        "audio"
+      ],
+      "title": "MediaKind",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "media_id": {
+      "maxLength": 64,
+      "minLength": 1,
+      "title": "Media Id",
+      "type": "string"
+    },
+    "kind": {
+      "$ref": "#/$defs/MediaKind"
+    },
+    "url": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Url"
+    }
+  },
+  "required": [
+    "media_id",
+    "kind"
+  ],
+  "title": "MediaRef",
+  "type": "object"
+}

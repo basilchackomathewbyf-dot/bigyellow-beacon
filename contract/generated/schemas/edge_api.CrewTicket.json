@@ -1,0 +1,129 @@
+{
+  "$defs": {
+    "HazardType": {
+      "enum": [
+        "slip_trip_fall",
+        "fall_from_height",
+        "ladder_access",
+        "lifting_crane_ops",
+        "mooring_ops",
+        "machinery_hydraulic",
+        "enclosed_space",
+        "fire_electrical",
+        "cargo_chemical",
+        "struck_by_object",
+        "navigation",
+        "other"
+      ],
+      "title": "HazardType",
+      "type": "string"
+    },
+    "OnboardStatus": {
+      "description": "Owned by the edge (Master).",
+      "enum": [
+        "NEW",
+        "ACKNOWLEDGED",
+        "ACTION_IN_PROGRESS",
+        "RESOLVED_ON_BOARD"
+      ],
+      "title": "OnboardStatus",
+      "type": "string"
+    },
+    "RejectReason": {
+      "enum": [
+        "DUPLICATE",
+        "NOT_A_NEAR_MISS",
+        "INSUFFICIENT_INFO",
+        "OUT_OF_SCOPE"
+      ],
+      "title": "RejectReason",
+      "type": "string"
+    },
+    "Severity": {
+      "enum": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "title": "Severity",
+      "type": "integer"
+    },
+    "ShoreStatus": {
+      "description": "Owned by shore-api. QUEUED_FOR_LINK is the only value the edge sets (before first push).",
+      "enum": [
+        "QUEUED_FOR_LINK",
+        "NEW",
+        "IN_REVIEW",
+        "REJECTED",
+        "CLOSED"
+      ],
+      "title": "ShoreStatus",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "description": "GET /reports/mine item.",
+  "properties": {
+    "ticket_id": {
+      "maxLength": 64,
+      "minLength": 1,
+      "title": "Ticket Id",
+      "type": "string"
+    },
+    "ticket_no": {
+      "title": "Ticket No",
+      "type": "string"
+    },
+    "title_en": {
+      "title": "Title En",
+      "type": "string"
+    },
+    "created_at": {
+      "format": "date-time",
+      "title": "Created At",
+      "type": "string"
+    },
+    "severity": {
+      "$ref": "#/$defs/Severity"
+    },
+    "hazard_type": {
+      "$ref": "#/$defs/HazardType"
+    },
+    "onboard_status": {
+      "$ref": "#/$defs/OnboardStatus"
+    },
+    "shore_status": {
+      "$ref": "#/$defs/ShoreStatus"
+    },
+    "reject_reason": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/RejectReason"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "unread_messages": {
+      "default": 0,
+      "title": "Unread Messages",
+      "type": "integer"
+    }
+  },
+  "required": [
+    "ticket_id",
+    "ticket_no",
+    "title_en",
+    "created_at",
+    "severity",
+    "hazard_type",
+    "onboard_status",
+    "shore_status"
+  ],
+  "title": "CrewTicket",
+  "type": "object"
+}

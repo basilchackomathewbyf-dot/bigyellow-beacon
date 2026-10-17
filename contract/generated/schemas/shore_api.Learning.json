@@ -1,0 +1,274 @@
+{
+  "$defs": {
+    "Audience": {
+      "enum": [
+        "same_vessel",
+        "selected_vessels",
+        "all_vessels"
+      ],
+      "title": "Audience",
+      "type": "string"
+    },
+    "CheckQuestion": {
+      "additionalProperties": false,
+      "properties": {
+        "question": {
+          "title": "Question",
+          "type": "string"
+        },
+        "options": {
+          "items": {
+            "type": "string"
+          },
+          "maxItems": 3,
+          "minItems": 3,
+          "title": "Options",
+          "type": "array"
+        },
+        "correct_index": {
+          "maximum": 2,
+          "minimum": 0,
+          "title": "Correct Index",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "question",
+        "options",
+        "correct_index"
+      ],
+      "title": "CheckQuestion",
+      "type": "object"
+    },
+    "LearningMediaKind": {
+      "enum": [
+        "image",
+        "gif_mp4",
+        "video"
+      ],
+      "title": "LearningMediaKind",
+      "type": "string"
+    },
+    "LearningMediaView": {
+      "additionalProperties": false,
+      "properties": {
+        "media_id": {
+          "maxLength": 64,
+          "minLength": 1,
+          "title": "Media Id",
+          "type": "string"
+        },
+        "kind": {
+          "$ref": "#/$defs/LearningMediaKind"
+        },
+        "url": {
+          "title": "Url",
+          "type": "string"
+        },
+        "bytes": {
+          "title": "Bytes",
+          "type": "integer"
+        },
+        "duration_s": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Duration S"
+        }
+      },
+      "required": [
+        "media_id",
+        "kind",
+        "url",
+        "bytes"
+      ],
+      "title": "LearningMediaView",
+      "type": "object"
+    },
+    "LearningPriority": {
+      "enum": [
+        "normal",
+        "urgent"
+      ],
+      "title": "LearningPriority",
+      "type": "string"
+    },
+    "LearningStatus": {
+      "enum": [
+        "draft",
+        "published",
+        "retracted"
+      ],
+      "title": "LearningStatus",
+      "type": "string"
+    },
+    "LearningTags": {
+      "additionalProperties": false,
+      "properties": {
+        "tool": {
+          "default": [],
+          "items": {
+            "type": "string"
+          },
+          "title": "Tool",
+          "type": "array"
+        },
+        "area": {
+          "default": [],
+          "items": {
+            "type": "string"
+          },
+          "title": "Area",
+          "type": "array"
+        },
+        "situation": {
+          "default": [],
+          "items": {
+            "type": "string"
+          },
+          "title": "Situation",
+          "type": "array"
+        }
+      },
+      "title": "LearningTags",
+      "type": "object"
+    },
+    "RankFilter": {
+      "enum": [
+        "all",
+        "officers",
+        "ratings"
+      ],
+      "title": "RankFilter",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "learning_id": {
+      "maxLength": 64,
+      "minLength": 1,
+      "title": "Learning Id",
+      "type": "string"
+    },
+    "source_ticket_id": {
+      "anyOf": [
+        {
+          "maxLength": 64,
+          "minLength": 1,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Source Ticket Id"
+    },
+    "title": {
+      "title": "Title",
+      "type": "string"
+    },
+    "context": {
+      "title": "Context",
+      "type": "string"
+    },
+    "situation": {
+      "title": "Situation",
+      "type": "string"
+    },
+    "do_points": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Do Points",
+      "type": "array"
+    },
+    "dont_points": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Dont Points",
+      "type": "array"
+    },
+    "check_question": {
+      "$ref": "#/$defs/CheckQuestion"
+    },
+    "tags": {
+      "$ref": "#/$defs/LearningTags"
+    },
+    "priority": {
+      "$ref": "#/$defs/LearningPriority",
+      "default": "normal"
+    },
+    "audience": {
+      "$ref": "#/$defs/Audience",
+      "default": "same_vessel"
+    },
+    "vessel_ids": {
+      "default": [],
+      "items": {
+        "maxLength": 64,
+        "minLength": 1,
+        "type": "string"
+      },
+      "title": "Vessel Ids",
+      "type": "array"
+    },
+    "rank_filter": {
+      "$ref": "#/$defs/RankFilter",
+      "default": "all"
+    },
+    "status": {
+      "$ref": "#/$defs/LearningStatus",
+      "default": "draft"
+    },
+    "ai_drafted_fields": {
+      "default": [],
+      "items": {
+        "type": "string"
+      },
+      "title": "Ai Drafted Fields",
+      "type": "array"
+    },
+    "media": {
+      "default": [],
+      "items": {
+        "$ref": "#/$defs/LearningMediaView"
+      },
+      "title": "Media",
+      "type": "array"
+    },
+    "published_at": {
+      "anyOf": [
+        {
+          "format": "date-time",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Published At"
+    }
+  },
+  "required": [
+    "learning_id",
+    "title",
+    "context",
+    "situation",
+    "do_points",
+    "dont_points",
+    "check_question",
+    "tags"
+  ],
+  "title": "Learning",
+  "type": "object"
+}

@@ -1,0 +1,32 @@
+{
+  "vessel_id": "v-0007",
+  "brief_date": "2026-10-18",
+  "headline": "Recurring hydraulic leak at crane 2 is the top risk today",
+  "rest_risk": "medium",
+  "mood_trend": {
+    "k_ok": true,
+    "n": 9,
+    "direction": "declining",
+    "summary": "Fatigue has risen for 3 days among those who checked in."
+  },
+  "open_hazards": [
+    {
+      "ticket_id": "0192f0c2-7a10-7c4e-9a51-3d0b6f8e0001",
+      "ticket_no": "BCN-0007-0012",
+      "title_en": "Slipped on hydraulic leak near deck crane",
+      "severity": 3,
+      "age_hours": 1.5
+    }
+  ],
+  "recommended_action": {
+    "action": "Isolate crane 2, clean the deck and fit a drip tray before cargo ops",
+    "why": "Repeat report of oil on deck at the same crane; slip injuries are the top cause in the corpus.",
+    "evidence_ticket_ids": [
+      "0192f0c2-7a10-7c4e-9a51-3d0b6f8e0001"
+    ]
+  },
+  "fleet_context": "Two sister vessels reported crane hydraulic leaks this week; one past case led to a fractured wrist.",
+  "model": "gemma3n:e4b",
+  "prompt_version": "brief/v1",
+  "generated_at": "2026-10-18T05:40:00Z"
+}

@@ -1,0 +1,53 @@
+{
+  "$defs": {
+    "LearningMediaKind": {
+      "enum": [
+        "image",
+        "gif_mp4",
+        "video"
+      ],
+      "title": "LearningMediaKind",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "media_id": {
+      "maxLength": 64,
+      "minLength": 1,
+      "title": "Media Id",
+      "type": "string"
+    },
+    "kind": {
+      "$ref": "#/$defs/LearningMediaKind"
+    },
+    "url": {
+      "title": "Url",
+      "type": "string"
+    },
+    "bytes": {
+      "title": "Bytes",
+      "type": "integer"
+    },
+    "duration_s": {
+      "anyOf": [
+        {
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Duration S"
+    }
+  },
+  "required": [
+    "media_id",
+    "kind",
+    "url",
+    "bytes"
+  ],
+  "title": "LearningMediaView",
+  "type": "object"
+}

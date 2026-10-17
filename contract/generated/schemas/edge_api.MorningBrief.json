@@ -1,0 +1,198 @@
+{
+  "$defs": {
+    "BriefHazard": {
+      "additionalProperties": false,
+      "properties": {
+        "ticket_id": {
+          "maxLength": 64,
+          "minLength": 1,
+          "title": "Ticket Id",
+          "type": "string"
+        },
+        "ticket_no": {
+          "title": "Ticket No",
+          "type": "string"
+        },
+        "title_en": {
+          "title": "Title En",
+          "type": "string"
+        },
+        "severity": {
+          "$ref": "#/$defs/Severity"
+        },
+        "age_hours": {
+          "title": "Age Hours",
+          "type": "number"
+        }
+      },
+      "required": [
+        "ticket_id",
+        "ticket_no",
+        "title_en",
+        "severity",
+        "age_hours"
+      ],
+      "title": "BriefHazard",
+      "type": "object"
+    },
+    "MoodTrend": {
+      "additionalProperties": false,
+      "properties": {
+        "k_ok": {
+          "title": "K Ok",
+          "type": "boolean"
+        },
+        "n": {
+          "title": "N",
+          "type": "integer"
+        },
+        "direction": {
+          "enum": [
+            "improving",
+            "stable",
+            "declining",
+            "insufficient_data"
+          ],
+          "title": "Direction",
+          "type": "string"
+        },
+        "summary": {
+          "title": "Summary",
+          "type": "string"
+        }
+      },
+      "required": [
+        "k_ok",
+        "n",
+        "direction",
+        "summary"
+      ],
+      "title": "MoodTrend",
+      "type": "object"
+    },
+    "RecommendedAction": {
+      "additionalProperties": false,
+      "properties": {
+        "action": {
+          "maxLength": 200,
+          "minLength": 1,
+          "title": "Action",
+          "type": "string"
+        },
+        "why": {
+          "title": "Why",
+          "type": "string"
+        },
+        "evidence_ticket_ids": {
+          "items": {
+            "maxLength": 64,
+            "minLength": 1,
+            "type": "string"
+          },
+          "minItems": 1,
+          "title": "Evidence Ticket Ids",
+          "type": "array"
+        }
+      },
+      "required": [
+        "action",
+        "why",
+        "evidence_ticket_ids"
+      ],
+      "title": "RecommendedAction",
+      "type": "object"
+    },
+    "Severity": {
+      "enum": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "title": "Severity",
+      "type": "integer"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "vessel_id": {
+      "maxLength": 64,
+      "minLength": 1,
+      "title": "Vessel Id",
+      "type": "string"
+    },
+    "brief_date": {
+      "format": "date",
+      "title": "Brief Date",
+      "type": "string"
+    },
+    "headline": {
+      "maxLength": 200,
+      "minLength": 1,
+      "title": "Headline",
+      "type": "string"
+    },
+    "rest_risk": {
+      "enum": [
+        "low",
+        "medium",
+        "high"
+      ],
+      "title": "Rest Risk",
+      "type": "string"
+    },
+    "mood_trend": {
+      "$ref": "#/$defs/MoodTrend"
+    },
+    "open_hazards": {
+      "items": {
+        "$ref": "#/$defs/BriefHazard"
+      },
+      "maxItems": 5,
+      "title": "Open Hazards",
+      "type": "array"
+    },
+    "recommended_action": {
+      "$ref": "#/$defs/RecommendedAction"
+    },
+    "fleet_context": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Fleet Context"
+    },
+    "model": {
+      "title": "Model",
+      "type": "string"
+    },
+    "prompt_version": {
+      "title": "Prompt Version",
+      "type": "string"
+    },
+    "generated_at": {
+      "format": "date-time",
+      "title": "Generated At",
+      "type": "string"
+    }
+  },
+  "required": [
+    "vessel_id",
+    "brief_date",
+    "headline",
+    "rest_risk",
+    "mood_trend",
+    "recommended_action",
+    "model",
+    "prompt_version",
+    "generated_at"
+  ],
+  "title": "MorningBrief",
+  "type": "object"
+}

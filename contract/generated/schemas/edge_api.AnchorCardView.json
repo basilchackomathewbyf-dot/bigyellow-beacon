@@ -1,0 +1,98 @@
+{
+  "$defs": {
+    "AnchorType": {
+      "enum": [
+        "motivation",
+        "safety",
+        "news"
+      ],
+      "title": "AnchorType",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "card_id": {
+      "maxLength": 64,
+      "minLength": 1,
+      "title": "Card Id",
+      "type": "string"
+    },
+    "publish_date": {
+      "format": "date",
+      "title": "Publish Date",
+      "type": "string"
+    },
+    "type": {
+      "$ref": "#/$defs/AnchorType"
+    },
+    "title": {
+      "title": "Title",
+      "type": "string"
+    },
+    "body": {
+      "title": "Body",
+      "type": "string"
+    },
+    "source_name": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Source Name"
+    },
+    "source_url": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Source Url"
+    },
+    "image_url": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Image Url"
+    },
+    "is_seed": {
+      "default": false,
+      "title": "Is Seed",
+      "type": "boolean"
+    },
+    "helpful": {
+      "default": false,
+      "title": "Helpful",
+      "type": "boolean"
+    },
+    "saved": {
+      "default": false,
+      "title": "Saved",
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "card_id",
+    "publish_date",
+    "type",
+    "title",
+    "body"
+  ],
+  "title": "AnchorCardView",
+  "type": "object"
+}

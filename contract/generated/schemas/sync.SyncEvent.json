@@ -1,0 +1,92 @@
+{
+  "$defs": {
+    "SyncEntity": {
+      "enum": [
+        "ticket",
+        "ticket_action",
+        "ticket_message",
+        "learning_stats",
+        "checkin_aggregate",
+        "anchor_stats"
+      ],
+      "title": "SyncEntity",
+      "type": "string"
+    },
+    "SyncOp": {
+      "enum": [
+        "insert",
+        "upsert",
+        "delete"
+      ],
+      "title": "SyncOp",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "event_id": {
+      "maxLength": 64,
+      "minLength": 1,
+      "title": "Event Id",
+      "type": "string"
+    },
+    "entity": {
+      "$ref": "#/$defs/SyncEntity"
+    },
+    "op": {
+      "$ref": "#/$defs/SyncOp"
+    },
+    "entity_id": {
+      "maxLength": 64,
+      "minLength": 1,
+      "title": "Entity Id",
+      "type": "string"
+    },
+    "version": {
+      "minimum": 1,
+      "title": "Version",
+      "type": "integer"
+    },
+    "occurred_at": {
+      "format": "date-time",
+      "title": "Occurred At",
+      "type": "string"
+    },
+    "owned_fields": {
+      "anyOf": [
+        {
+          "additionalProperties": true,
+          "type": "object"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Owned Fields"
+    },
+    "payload": {
+      "anyOf": [
+        {
+          "additionalProperties": true,
+          "type": "object"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Payload"
+    }
+  },
+  "required": [
+    "event_id",
+    "entity",
+    "op",
+    "entity_id",
+    "version",
+    "occurred_at"
+  ],
+  "title": "SyncEvent",
+  "type": "object"
+}

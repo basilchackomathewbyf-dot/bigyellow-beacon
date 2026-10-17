@@ -1,0 +1,33 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "ticket_id": {
+      "maxLength": 64,
+      "minLength": 1,
+      "title": "Ticket Id",
+      "type": "string"
+    },
+    "ticket_no": {
+      "title": "Ticket No",
+      "type": "string"
+    },
+    "title_en": {
+      "title": "Title En",
+      "type": "string"
+    },
+    "similarity": {
+      "maximum": 1,
+      "minimum": 0,
+      "title": "Similarity",
+      "type": "number"
+    }
+  },
+  "required": [
+    "ticket_id",
+    "ticket_no",
+    "title_en",
+    "similarity"
+  ],
+  "title": "SimilarOpenTicket",
+  "type": "object"
+}

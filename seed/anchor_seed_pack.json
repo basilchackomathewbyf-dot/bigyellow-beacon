@@ -1,0 +1,215 @@
+{
+  "_note": "Evergreen Daily Anchor seed pack used when nothing is scheduled. 14 of the target 60 (stretch: generate the rest with Gemini). Hindi needs native-speaker review.",
+  "cards": [
+    {
+      "card_id": "seed-001",
+      "type": "motivation",
+      "title": {
+        "en": "Small steps count",
+        "hi": "छोटे कदम मायने रखते हैं"
+      },
+      "body": {
+        "en": "Every safe watch, every clean handover, every report you make keeps someone's family whole. That matters.",
+        "hi": "हर सुरक्षित वॉच, हर साफ़ हैंडओवर, हर रिपोर्ट किसी के परिवार को सुरक्षित रखती है। यह मायने रखता है।"
+      },
+      "is_seed": true,
+      "source_name": null,
+      "source_url": null
+    },
+    {
+      "card_id": "seed-002",
+      "type": "safety",
+      "title": {
+        "en": "Oil on deck? Stop first",
+        "hi": "डेक पर तेल? पहले रुकें"
+      },
+      "body": {
+        "en": "If you see oil near a crane or winch, stop the job, cordon the area and report it before you step around it.",
+        "hi": "क्रेन या विंच के पास तेल दिखे तो काम रोकें, जगह घेरें और उसके पास से गुजरने से पहले रिपोर्ट करें।"
+      },
+      "is_seed": true,
+      "source_name": null,
+      "source_url": null
+    },
+    {
+      "card_id": "seed-003",
+      "type": "motivation",
+      "title": {
+        "en": "Talk to a shipmate",
+        "hi": "किसी साथी से बात करें"
+      },
+      "body": {
+        "en": "Long contracts are easier together. Ask someone how their day went at mess time today.",
+        "hi": "लंबे कॉन्ट्रैक्ट साथ में आसान होते हैं। आज खाने के समय किसी से पूछें कि उनका दिन कैसा रहा।"
+      },
+      "is_seed": true,
+      "source_name": null,
+      "source_url": null
+    },
+    {
+      "card_id": "seed-004",
+      "type": "safety",
+      "title": {
+        "en": "Three points of contact",
+        "hi": "तीन बिंदु संपर्क"
+      },
+      "body": {
+        "en": "On any ladder, keep two hands and one foot, or two feet and one hand, on it at all times.",
+        "hi": "किसी भी सीढ़ी पर हर समय दो हाथ और एक पैर, या दो पैर और एक हाथ उस पर रखें।"
+      },
+      "is_seed": true,
+      "source_name": null,
+      "source_url": null
+    },
+    {
+      "card_id": "seed-005",
+      "type": "motivation",
+      "title": {
+        "en": "Rest is part of the job",
+        "hi": "आराम भी काम का हिस्सा है"
+      },
+      "body": {
+        "en": "Sleep is safety equipment. Protect your rest hours the way you protect your PPE.",
+        "hi": "नींद भी सुरक्षा उपकरण है। अपने आराम के घंटों की रक्षा वैसे ही करें जैसे अपने PPE की करते हैं।"
+      },
+      "is_seed": true,
+      "source_name": null,
+      "source_url": null
+    },
+    {
+      "card_id": "seed-006",
+      "type": "safety",
+      "title": {
+        "en": "Snap-back zones are real",
+        "hi": "स्नैप-बैक ज़ोन असली है"
+      },
+      "body": {
+        "en": "During mooring, stand outside the painted snap-back zone, even for a moment.",
+        "hi": "मूरिंग के दौरान पेंट किए गए स्नैप-बैक ज़ोन से बाहर रहें, एक पल के लिए भी।"
+      },
+      "is_seed": true,
+      "source_name": null,
+      "source_url": null
+    },
+    {
+      "card_id": "seed-007",
+      "type": "motivation",
+      "title": {
+        "en": "You noticed. That counts.",
+        "hi": "आपने देखा, यह मायने रखता है"
+      },
+      "body": {
+        "en": "Every near-miss you report is an accident that did not happen to someone else.",
+        "hi": "आपकी हर नियर-मिस रिपोर्ट किसी और के साथ होने वाली दुर्घटना को रोकती है।"
+      },
+      "is_seed": true,
+      "source_name": null,
+      "source_url": null
+    },
+    {
+      "card_id": "seed-008",
+      "type": "safety",
+      "title": {
+        "en": "Test before you enter",
+        "hi": "प्रवेश से पहले जाँच"
+      },
+      "body": {
+        "en": "No enclosed space entry without an oxygen reading, a permit and a standby at the entrance.",
+        "hi": "ऑक्सीजन रीडिंग, परमिट और प्रवेश द्वार पर स्टैंडबाई के बिना किसी बंद जगह में न जाएँ।"
+      },
+      "is_seed": true,
+      "source_name": null,
+      "source_url": null
+    },
+    {
+      "card_id": "seed-009",
+      "type": "motivation",
+      "title": {
+        "en": "Call home when you can",
+        "hi": "जब हो सके, घर फ़ोन करें"
+      },
+      "body": {
+        "en": "When the link is up, a two-minute call home can lift a whole week.",
+        "hi": "जब लिंक चालू हो, घर पर दो मिनट की कॉल पूरे हफ़्ते को बेहतर बना सकती है।"
+      },
+      "is_seed": true,
+      "source_name": null,
+      "source_url": null
+    },
+    {
+      "card_id": "seed-010",
+      "type": "safety",
+      "title": {
+        "en": "Hydrate in the engine room",
+        "hi": "इंजन रूम में पानी पीते रहें"
+      },
+      "body": {
+        "en": "Drink water every hour in hot spaces. Thirst comes after you are already dehydrated.",
+        "hi": "गर्म जगहों में हर घंटे पानी पिएँ। प्यास तब लगती है जब शरीर में पानी पहले ही कम हो चुका होता है।"
+      },
+      "is_seed": true,
+      "source_name": null,
+      "source_url": null
+    },
+    {
+      "card_id": "seed-011",
+      "type": "motivation",
+      "title": {
+        "en": "Steady seas start inside",
+        "hi": "शांति भीतर से शुरू होती है"
+      },
+      "body": {
+        "en": "Two slow breaths before a hard task help your hands and your head.",
+        "hi": "किसी कठिन काम से पहले दो धीमी साँसें आपके हाथ और दिमाग दोनों की मदद करती हैं।"
+      },
+      "is_seed": true,
+      "source_name": null,
+      "source_url": null
+    },
+    {
+      "card_id": "seed-012",
+      "type": "safety",
+      "title": {
+        "en": "Lock out, tag out",
+        "hi": "लॉक आउट, टैग आउट"
+      },
+      "body": {
+        "en": "Before working on machinery, isolate it, lock it and tag it. Check it is dead before you touch it.",
+        "hi": "मशीनरी पर काम से पहले उसे अलग करें, लॉक करें और टैग लगाएँ। छूने से पहले जाँच लें कि वह बंद है।"
+      },
+      "is_seed": true,
+      "source_name": null,
+      "source_url": null
+    },
+    {
+      "card_id": "seed-013",
+      "type": "motivation",
+      "title": {
+        "en": "Ask for help early",
+        "hi": "जल्दी मदद माँगें"
+      },
+      "body": {
+        "en": "Asking early is a sign of a good seafarer, not a weak one.",
+        "hi": "जल्दी मदद माँगना एक अच्छे नाविक की निशानी है, कमज़ोर की नहीं।"
+      },
+      "is_seed": true,
+      "source_name": null,
+      "source_url": null
+    },
+    {
+      "card_id": "seed-014",
+      "type": "safety",
+      "title": {
+        "en": "Gangway check",
+        "hi": "गैंगवे जाँच"
+      },
+      "body": {
+        "en": "Before you go ashore, check the gangway net and handrails. Report anything loose.",
+        "hi": "किनारे जाने से पहले गैंगवे नेट और रेलिंग जाँचें। कुछ भी ढीला हो तो रिपोर्ट करें।"
+      },
+      "is_seed": true,
+      "source_name": null,
+      "source_url": null
+    }
+  ]
+}

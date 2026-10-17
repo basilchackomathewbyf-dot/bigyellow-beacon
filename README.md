@@ -1,63 +1,54 @@
 # BigYellow Beacon
 
-Offline-first AI copilot for seafarers' wellbeing and safety. Google Cloud AI Builder Cup 2026.
+**Offline-first AI copilot for seafarer safety and wellbeing.** Google Cloud AI Builder Cup 2026 · Bigyellowfish (BYF).
 
-| Part | Folder | Built with | Spec |
-|---|---|---|---|
-| Shared contracts | `contracts/` | — | schemas, API contract, safety rails, prompts, eval, seed |
-| Edge server (ship) | `edge/` | Cursor | `.cursor/rules/10-edge.mdc` |
-| Shore API (GCP) | `shore/` | Cursor | `.cursor/rules/20-shore.mdc` |
-| Ship + shore dashboards | `dashboards/` | Cursor | `.cursor/rules/30-dashboards.mdc` |
-| Crew Android app | `mobile/android/` | Codex | `mobile/android/AGENTS.md` |
-| Architecture | `docs/architecture.html` | — | open in a browser |
+A seafarer with no internet reports a hazard by voice in Hindi. **Gemma** on the ship's edge server turns it into a structured report and alerts the Master within a second. When the satellite link returns, a ~2 KB delta reaches **Cloud Run**, where **Gemini on Vertex AI** links it to the same hazard on sister vessels and to a past accident, a reviewer replies anonymously, and a 6-second microlearning goes back to the fleet.
 
-## Using this in Cursor
+![Architecture](docs/design-media/media/image1.png)
 
-1. Open the **repo root** (`bigyellow-beacon/`) in Cursor, not a subfolder, so the rules in `.cursor/rules/` load.
-2. `00-beacon-shared.mdc` is always on. The component rules attach automatically once files exist in their folder; for the first prompt in an empty folder, mention the rule with `@`.
-3. Use **Agent** mode. Work one milestone per chat, review the diff, run it, commit, then start the next milestone in a new chat.
-4. Never let an agent edit `contracts/` silently. If a change is needed, ask for it explicitly and tell the team.
+## Google AI and Google Cloud in Beacon
+| Product | Where | Role |
+|---|---|---|
+| Gemma 3n (Ollama) | Ship edge | Structure + translate reports, clarifying question, check-in, morning brief, offline |
+| EmbeddingGemma | Ship edge | "Similar report already open" |
+| Gemini on Vertex AI | Shore | Ticket analysis, microlearning drafts, fleet context, Daily Anchor |
+| Vertex AI embeddings | Shore | Similar tickets across the fleet, accident-corpus match |
+| Cloud Run | Shore | shore-api + Beacon Dashboard |
+| Cloud SQL for PostgreSQL + pgvector | Shore | Tickets, learnings, vectors |
+| Cloud Storage | Shore | Photos and learning media (signed URLs) |
 
-### Kick-off prompts (paste into Cursor Agent)
+## Privacy by design
+Crew identity, audio and check-in transcripts never leave the ship. Shore sees a per-ticket HMAC pseudonym, rank band and vessel. Wellbeing numbers appear only for groups of 5 or more. Free text is scrubbed before sync. The contract rejects any sync payload that carries a crew identifier.
 
-**Edge, first chat**
+## Repo
+| Folder | What | Owner |
+|---|---|---|
+| `contract/` | `beacon_contract` Pydantic package: every payload, enums, HMAC, privacy helpers, demo fixtures (frozen v1.0) | Basil |
+| `edge/` | FastAPI edge server, SSE, outbox + sync worker; `edge/app/ai`, `edge/app/safety` for Gemma + rails | Basil / Sumit |
+| `shore/` | shore-api on Cloud Run; `shore/app/ai` for Gemini | Engineer 4 / Sumit |
+| `web/apps/crew` | React PWA for Crew + Master (served by the edge) | Amar |
+| `web/apps/dashboard` | Beacon Dashboard (served by shore-api) | Engineer 4 |
+| `seed/` | Synthetic vessels, roster, shore tickets, accident corpus, Daily Anchor pack | |
+| `docs/` | `TECHNICAL_DESIGN.md` (source of truth), `DECISIONS.md`, `PLAN.md` | Kundan / Basil |
+| `.cursor/rules/` | AI coding rules per role: `00` shared, `10` edge, `20` shore, `30` web, `40` AI | |
+
+## Quick start
+```bash
+python3 -m venv .venv && source .venv/bin/activate
+pip install -e "contract[dev]" && pytest -q contract/tests      # contract must be green
+python -m beacon_contract.export                                  # schemas + fixtures for web mocks
+
+cd edge && docker compose up -d db && pip install -e ../contract -e ".[dev]" && make seed
+uvicorn app.main:app --port 8080                                  # HTTPS setup: .cursor/rules/30-web.mdc §1
 ```
-@10-edge.mdc @00-beacon-shared.mdc
-Build milestone E1 of the edge server exactly as specified. Create edge/ with docker-compose (db + api only for now), config, logging, health, Alembic with all tables from §4, staff PIN login, device pairing + QR payload, /me, and `make seed`. Include tests. When done, list the commands to run it and what you verified.
+Demo logins and IDs: `.cursor/rules/00-beacon-shared.mdc` (Demo data) and `seed/crew_v-0007.json`.
+
+## Working in Cursor
+Open this folder (repo root). In Agent chat, mention your rule file and a milestone from it:
 ```
-Then: `Build milestone E2 …`, `E3 …`, and so on in new chats. For E3 add: `Run make eval and show the accuracy table.`
-
-**Shore, first chat**
+@10-edge.mdc Build milestone M0 exactly as specified. Show the diff summary, run the tests, list any # DECISION.
+@40-ai.mdc   Build milestone A1 (model test matrix) and commit MODELS.md with the results.
+@30-web.mdc  Build milestones W0 and W1 for apps/crew.
+@20-shore.mdc Build milestone S1, then give me the gcloud commands you used.
 ```
-@20-shore.mdc @00-beacon-shared.mdc
-Build milestone S1 of the shore API exactly as specified: skeleton, config, Firestore async client, health, vessel API keys, scripts/create_vessel.py, Dockerfile that includes contracts/, and the deploy target for project byf-beacon-2026. Include tests with the in-memory repos. Then give me the exact gcloud commands to enable APIs, create the service account with roles, and deploy.
-```
-For S3 add: `The demo cluster test in §11 must pass.`
-
-**Dashboards, first chat**
-```
-@30-dashboards.mdc @00-beacon-shared.mdc
-Build milestone D1: the pnpm workspace, packages/ui with tokens (light + dark) and the shared components, and MSW mocks with fixtures for both apps using the example JSON from 10-edge.mdc §8/§10 and 20-shore.mdc §8, including the 3-vessel crane cluster. Self-host fonts. No CDN URLs anywhere.
-```
-
-**Useful follow-ups**
-- `Check this module against the spec section §X and list every mismatch before changing anything.`
-- `Write the tests from §12 for what exists so far and make them pass.`
-- `Run the app and walk through the demo checklist in §14; fix what fails.`
-
-## Who builds what (suggested)
-
-| Person | Today |
-|---|---|
-| Sumit | `edge/model-server` (E2) and `edge/app/ai/*` (E3) |
-| Amar | `mobile/android` in Codex (M1–M5), then ship-web D2 |
-| Basil | `edge` E1/E4/E5, `shore` S1–S4, shore-web D3 |
-
-## Integration contracts (do not drift)
-- Crew app ↔ edge: `contracts/api/edge-crew-api.md`
-- Edge ↔ shore: `.cursor/rules/20-shore.mdc` §5
-- Ship dashboard ↔ edge: `.cursor/rules/10-edge.mdc` §8 and §10
-- Shore dashboard ↔ shore: `.cursor/rules/20-shore.mdc` §8
-- Data shapes: `contracts/schemas/*.json`
-
-Run `pytest -q contracts/tests` after any change to `contracts/`.
+One milestone per chat. `git pull` before, `git add . && git commit && git pull && git push` after. Don't change `contract/` without telling the team.

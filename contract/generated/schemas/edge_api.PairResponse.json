@@ -1,0 +1,52 @@
+{
+  "$defs": {
+    "Role": {
+      "enum": [
+        "crew",
+        "master",
+        "shore_reviewer",
+        "shore_admin",
+        "vessel"
+      ],
+      "title": "Role",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "device_id": {
+      "maxLength": 64,
+      "minLength": 1,
+      "title": "Device Id",
+      "type": "string"
+    },
+    "device_token": {
+      "title": "Device Token",
+      "type": "string"
+    },
+    "crew_id": {
+      "maxLength": 64,
+      "minLength": 1,
+      "title": "Crew Id",
+      "type": "string"
+    },
+    "role": {
+      "$ref": "#/$defs/Role"
+    },
+    "vessel_id": {
+      "maxLength": 64,
+      "minLength": 1,
+      "title": "Vessel Id",
+      "type": "string"
+    }
+  },
+  "required": [
+    "device_id",
+    "device_token",
+    "crew_id",
+    "role",
+    "vessel_id"
+  ],
+  "title": "PairResponse",
+  "type": "object"
+}

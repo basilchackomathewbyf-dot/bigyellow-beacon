@@ -9,3 +9,8 @@ __pycache__/
 .DS_Store
 .venv/
 **/.venv/
+certs/
+*.pem
+edge/data/
+node_modules/
+*.egg-info/

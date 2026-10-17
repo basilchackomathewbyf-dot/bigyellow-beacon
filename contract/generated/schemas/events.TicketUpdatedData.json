@@ -1,0 +1,54 @@
+{
+  "$defs": {
+    "OnboardStatus": {
+      "description": "Owned by the edge (Master).",
+      "enum": [
+        "NEW",
+        "ACKNOWLEDGED",
+        "ACTION_IN_PROGRESS",
+        "RESOLVED_ON_BOARD"
+      ],
+      "title": "OnboardStatus",
+      "type": "string"
+    },
+    "ShoreStatus": {
+      "description": "Owned by shore-api. QUEUED_FOR_LINK is the only value the edge sets (before first push).",
+      "enum": [
+        "QUEUED_FOR_LINK",
+        "NEW",
+        "IN_REVIEW",
+        "REJECTED",
+        "CLOSED"
+      ],
+      "title": "ShoreStatus",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "ticket_id": {
+      "maxLength": 64,
+      "minLength": 1,
+      "title": "Ticket Id",
+      "type": "string"
+    },
+    "ticket_no": {
+      "title": "Ticket No",
+      "type": "string"
+    },
+    "onboard_status": {
+      "$ref": "#/$defs/OnboardStatus"
+    },
+    "shore_status": {
+      "$ref": "#/$defs/ShoreStatus"
+    }
+  },
+  "required": [
+    "ticket_id",
+    "ticket_no",
+    "onboard_status",
+    "shore_status"
+  ],
+  "title": "TicketUpdatedData",
+  "type": "object"
+}

@@ -1,0 +1,27 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "pairing_code": {
+      "title": "Pairing Code",
+      "type": "string"
+    },
+    "crew_id": {
+      "maxLength": 64,
+      "minLength": 1,
+      "title": "Crew Id",
+      "type": "string"
+    },
+    "pin": {
+      "pattern": "^\\d{4,6}$",
+      "title": "Pin",
+      "type": "string"
+    }
+  },
+  "required": [
+    "pairing_code",
+    "crew_id",
+    "pin"
+  ],
+  "title": "PairRequest",
+  "type": "object"
+}

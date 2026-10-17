@@ -1,0 +1,20 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "version": {
+      "title": "Version",
+      "type": "string"
+    },
+    "rules": {
+      "additionalProperties": true,
+      "title": "Rules",
+      "type": "object"
+    }
+  },
+  "required": [
+    "version",
+    "rules"
+  ],
+  "title": "RailUpdateChange",
+  "type": "object"
+}

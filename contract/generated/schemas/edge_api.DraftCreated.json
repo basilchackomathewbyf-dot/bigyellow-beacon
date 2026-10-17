@@ -1,0 +1,66 @@
+{
+  "$defs": {
+    "MediaKind": {
+      "enum": [
+        "photo",
+        "audio"
+      ],
+      "title": "MediaKind",
+      "type": "string"
+    },
+    "MediaRef": {
+      "additionalProperties": false,
+      "properties": {
+        "media_id": {
+          "maxLength": 64,
+          "minLength": 1,
+          "title": "Media Id",
+          "type": "string"
+        },
+        "kind": {
+          "$ref": "#/$defs/MediaKind"
+        },
+        "url": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Url"
+        }
+      },
+      "required": [
+        "media_id",
+        "kind"
+      ],
+      "title": "MediaRef",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "draft_id": {
+      "maxLength": 64,
+      "minLength": 1,
+      "title": "Draft Id",
+      "type": "string"
+    },
+    "media": {
+      "default": [],
+      "items": {
+        "$ref": "#/$defs/MediaRef"
+      },
+      "title": "Media",
+      "type": "array"
+    }
+  },
+  "required": [
+    "draft_id"
+  ],
+  "title": "DraftCreated",
+  "type": "object"
+}

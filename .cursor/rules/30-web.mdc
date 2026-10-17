@@ -1,0 +1,78 @@
+---
+description: Beacon WEB (Engineer 3, Amar for the crew app; Engineer 4 for the dashboard) — React PWA for Crew + Master served by the edge, and the Beacon Dashboard for shore. Use for web/.
+globs: web/**
+alwaysApply: false
+---
+
+# Web spec
+
+Read `00-beacon-shared.mdc`, then `docs/TECHNICAL_DESIGN.md` §6 (crew app), §8 (dashboard), §9 (statuses and anonymity), §10 (learnings), §15.1 and §15.3 (offline + HTTPS).
+
+## 1. HTTPS first (Phase 0; blocks mic, camera, service worker)
+```
+brew install mkcert && mkcert -install
+mkdir -p certs && cd certs && mkcert beacon.ship.local 192.168.1.10 localhost 127.0.0.1
+```
+Install the mkcert root CA (`mkcert -CAROOT` → `rootCA.pem`) on each demo phone: Android **Settings → Security → Encryption & credentials → Install a certificate → CA certificate**; iOS: AirDrop the `.pem`, install the profile, then **Settings → General → About → Certificate Trust Settings → enable**. Map `beacon.ship.local` to the edge laptop IP on the travel router's DNS (or use the IP name in the cert). Fallback for a stubborn device: Chrome flag `unsafely-treat-insecure-origin-as-secure` with the edge URL. Write the steps to `scripts/mkcert_setup.md`.
+
+## 2. Workspace
+```
+web/
+├── package.json  pnpm-workspace.yaml  tsconfig.base.json
+├── packages/ui/        tokens (light/dark), components, i18n (i18next: en, hi), API client, generated types
+├── apps/crew/          React 18 + Vite + TS + Tailwind + vite-plugin-pwa (Workbox) + Dexie + React Router  → served by the edge
+└── apps/dashboard/     React 18 + Vite + TS + Tailwind                                                     → served by shore-api
+```
+- Types: generate from `contract/generated/schemas/*.json` with `json-schema-to-typescript` (`pnpm gen:types`), or `openapi-typescript` against `/openapi.json` of the running edge/shore. Never hand-write payload types.
+- Mocks: MSW handlers return `contract/generated/fixtures/*.json` (`VITE_MOCK=1`), so the UI works before the APIs do.
+- No CDN anything. Self-host fonts (`@fontsource/*`). The crew app must load with no internet.
+- Design: calm, high-contrast, large touch targets (≥ 48 px, primary actions ≥ 56 px), BYF yellow accent, severity colours always with a text label, light + dark.
+
+## 3. Crew app (`apps/crew`): one PWA, two role views
+Role from the session (`GET /me`) decides the tabs. Crew layout mobile-first at 360 px; Master two-column from 1024 px.
+
+**Common (§6.1)**: pairing (scan QR → `POST /auth/pair` with PIN set → `POST /auth/login`), device token in IndexedDB, session JWT in memory; language picker (en/hi for the demo); **connectivity banner** with three states (Edge connected · Edge unreachable, saving on this phone · Ship offline from shore, last sync HH:MM) from `/sync/status` + fetch failures; **Inbox** with unread badge.
+
+**Offline (§15.1)**: Workbox precaches the shell; API GETs stale-while-revalidate; writes never cached. Every write first goes to a **Dexie outbox** with a client UUID, then is sent with `Idempotency-Key`; flush on `online`, focus, SSE reconnect and a 15 s timer. Media blobs stay in IndexedDB until the edge returns 201. If the edge is unreachable during capture: "Saved on your phone, will send when connected to the ship network"; structuring runs later and the reporter gets an inbox item to review.
+
+**Crew view**
+1. **Report a near-miss** (target < 30 s): hold-to-record voice (MediaRecorder, max 60 s; prefer `audio/webm;codecs=opus`, fall back to `audio/mp4` on iOS Safari; detect with `MediaRecorder.isTypeSupported`), up to 3 photos (resize to 1280 px, JPEG q70, client-side), optional text → `POST /reports/drafts` → `…/structure` → **review card** (title, location, hazard, ISM, severity 1–5 with rubric hint, immediate action, English translation, original text) → clarifying question answered by voice or text → edit fields → **Anonymous (default) / Share my name with Master** → submit. Show `similar_open_ticket` as "Similar report already open" when present. If `safety.rail_hit`, show the fixed message screen, not the draft.
+2. **My reports**: list with both status chips (Submitted, Acknowledged by Master, Action taken, Sent to shore, In review, Rejected + reason, Closed) and the anonymous reply thread per ticket.
+3. **Learnings**: card feed; media inline (muted autoplay, loop for GIF-type); Do/Don't lists; check question (3 options); **I understood** → `POST /learnings/{id}/ack`. Urgent learnings show a banner.
+4. **Inbox**: shore replies, Master replies, status changes, new learnings.
+5. (P1) **Daily check-in** (quick: mood face 1–5, hours slept, fatigue slider, tags; chat: 2–3 Gemma turns) → supportive line + tip; **My mood history** (7/30/90-day chart, calendar heatmap, streak, top tags). Safety screen on rail hit with "Would you like the Master to check on you?".
+6. (P1) **Daily Anchor** card at the top of home; 14-day feed; Helpful / Save.
+
+**Master view**
+1. **Live alerts** via SSE (`@microsoft/fetch-event-source` with the Authorization header; resume with Last-Event-ID): `ticket.new` → in-app banner + sound + `navigator.vibrate` (Android) + OS notification via the service worker when backgrounded (ask notification permission at Master login). The sound must play: require one user tap after login to unlock audio.
+2. **Near-miss board**: Kanban by `onboard_status` (New, Acknowledged, Action in progress, Resolved on board), severity colour, age; card → detail with original + English, photos, reporter name only if shared.
+3. **Ticket actions**: Acknowledge; add action (text, responsible rank, due time); mark resolved on board; shore status shown read-only.
+4. **Reply to reporter** (thread, labelled Master).
+5. **Sync panel** (demo-critical): link UP/DOWN, last sync time, pending events/media, **last push size in KB**, **Sync now**, **Link: Auto / Up / Down** toggle (`POST /sync/override`).
+6. **Pair crew**: pick a roster member → QR (`qrcode` npm, canvas) + code; revoke device.
+7. (P1) Morning brief (headline, rest risk, mood trend or "hidden, fewer than 5 check-ins", open hazards, **one recommended action**, fleet context line); learnings read rates; welfare alerts (name + time, Acknowledge / Mark contacted).
+
+## 4. Beacon Dashboard (`apps/dashboard`, §8, §10)
+Polls `GET /tickets?updated_since=` every 10 s. JWT login (email + password).
+1. **Ticket queue**: filters (status, vessel, severity, hazard, ISM, dates), default sort severity desc then age; columns per §8.1; badge when the Master already resolved on board.
+2. **Ticket detail**: left = as reported (English + original language, photos, fields, rank band, Master's actions timeline; no identity); right = **AI analysis** (summary, contributing factors, ISM check, severity check, similar tickets on sister vessels, corpus matches with citation, corrective/preventive actions, "Suggested microlearning"), each block labelled "AI generated · model · time", Re-run button. Actions: **Accept**, **Reject** (reason list + note), **Reply to reporter**, **Close**, **Create microlearning**.
+3. **Microlearning studio**: prefilled from the ticket via **Draft with AI**; AI fields marked until edited; media upload (image, ≤ 6 s video; show the measured duration error); targeting (This vessel / Selected / All) + rank filter; priority Normal/Urgent; **360 px phone preview**; Publish; list with delivery and ack rates; Retract (P2).
+4. (P1) **Fleet overview**: open tickets by severity, tickets per vessel (30 days), top hazards, learning ack rate, hazard clusters, wellbeing tiles only when n ≥ 5.
+5. (P2) **Daily Anchor studio**: 14-day calendar, Draft a week with AI, edit, approve, stats.
+
+## 5. Milestones
+| ID | Owner | Scope | Done when |
+|---|---|---|---|
+| W0 | Amar | mkcert on laptop + phones; `https://beacon.ship.local:8443` opens on the phone | mic permission prompt appears in a test page |
+| W1 | Amar | workspace, ui package, i18n en/hi, types, MSW mocks, auth + role routing | pair + login against mocks, then against the edge |
+| W2 | Amar | crew report flow + Dexie outbox | Hindi voice + photo → review card → submit (mock, then edge) |
+| W3 | Amar | Master board + SSE alert + actions | tablet buzzes ≤ 1 s after submit on the real edge |
+| W4 | Amar | My reports, threads, inbox, sync panel + link toggle | reply round-trip and KB counter visible |
+| W5 | Amar | Learnings feed + ack, urgent banner | pulled learning plays its 5 s video |
+| D1 | Eng 4 | dashboard login, queue, detail (left pane) | seeded tickets listed |
+| D2 | Eng 4 | analysis pane, accept/reject/close, reply | demo steps 4–5 |
+| D3 | Eng 4 | microlearning studio + publish | demo step 6 |
+| W6/D4 (P1) | both | check-in + mood history, Daily Anchor card, morning brief, welfare, fleet overview | |
+
+## 6. Tests
+Playwright against MSW: crew report → review → submit; Master receives a mocked `ticket.new` and acknowledges; dashboard accept → reply → draft learning → publish. A build check that fails if `apps/crew/dist` references any `http(s)://` host other than relative URLs.

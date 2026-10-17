@@ -1,0 +1,43 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "learning_id": {
+      "maxLength": 64,
+      "minLength": 1,
+      "title": "Learning Id",
+      "type": "string"
+    },
+    "vessel_id": {
+      "maxLength": 64,
+      "minLength": 1,
+      "title": "Vessel Id",
+      "type": "string"
+    },
+    "delivered": {
+      "title": "Delivered",
+      "type": "integer"
+    },
+    "opened": {
+      "title": "Opened",
+      "type": "integer"
+    },
+    "acknowledged": {
+      "title": "Acknowledged",
+      "type": "integer"
+    },
+    "check_correct": {
+      "title": "Check Correct",
+      "type": "integer"
+    }
+  },
+  "required": [
+    "learning_id",
+    "vessel_id",
+    "delivered",
+    "opened",
+    "acknowledged",
+    "check_correct"
+  ],
+  "title": "LearningStatsPayload",
+  "type": "object"
+}

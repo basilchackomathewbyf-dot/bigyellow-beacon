@@ -1,0 +1,62 @@
+{
+  "$defs": {
+    "MessageSender": {
+      "enum": [
+        "reporter",
+        "master",
+        "shore"
+      ],
+      "title": "MessageSender",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "message_id": {
+      "maxLength": 64,
+      "minLength": 1,
+      "title": "Message Id",
+      "type": "string"
+    },
+    "ticket_id": {
+      "maxLength": 64,
+      "minLength": 1,
+      "title": "Ticket Id",
+      "type": "string"
+    },
+    "sender": {
+      "$ref": "#/$defs/MessageSender"
+    },
+    "body": {
+      "title": "Body",
+      "type": "string"
+    },
+    "created_at": {
+      "format": "date-time",
+      "title": "Created At",
+      "type": "string"
+    },
+    "read_at": {
+      "anyOf": [
+        {
+          "format": "date-time",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Read At"
+    }
+  },
+  "required": [
+    "message_id",
+    "ticket_id",
+    "sender",
+    "body",
+    "created_at"
+  ],
+  "title": "MessageView",
+  "type": "object"
+}

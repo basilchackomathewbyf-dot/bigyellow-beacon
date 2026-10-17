@@ -1,0 +1,20 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "device_token": {
+      "title": "Device Token",
+      "type": "string"
+    },
+    "pin": {
+      "pattern": "^\\d{4,6}$",
+      "title": "Pin",
+      "type": "string"
+    }
+  },
+  "required": [
+    "device_token",
+    "pin"
+  ],
+  "title": "LoginRequest",
+  "type": "object"
+}

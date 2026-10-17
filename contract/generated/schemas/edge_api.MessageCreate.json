@@ -1,0 +1,16 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "body": {
+      "maxLength": 4000,
+      "minLength": 1,
+      "title": "Body",
+      "type": "string"
+    }
+  },
+  "required": [
+    "body"
+  ],
+  "title": "MessageCreate",
+  "type": "object"
+}

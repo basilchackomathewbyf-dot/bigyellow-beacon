@@ -1,0 +1,147 @@
+{
+  "$defs": {
+    "CheckinTag": {
+      "enum": [
+        "rest",
+        "workload",
+        "home",
+        "family",
+        "health",
+        "team"
+      ],
+      "title": "CheckinTag",
+      "type": "string"
+    },
+    "MoodEntry": {
+      "additionalProperties": false,
+      "properties": {
+        "ship_date": {
+          "format": "date",
+          "title": "Ship Date",
+          "type": "string"
+        },
+        "mood": {
+          "maximum": 5,
+          "minimum": 1,
+          "title": "Mood",
+          "type": "integer"
+        },
+        "fatigue": {
+          "maximum": 5,
+          "minimum": 1,
+          "title": "Fatigue",
+          "type": "integer"
+        },
+        "workload": {
+          "anyOf": [
+            {
+              "maximum": 5,
+              "minimum": 1,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Workload"
+        },
+        "sleep_hours": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Sleep Hours"
+        },
+        "tags": {
+          "default": [],
+          "items": {
+            "$ref": "#/$defs/CheckinTag"
+          },
+          "title": "Tags",
+          "type": "array"
+        }
+      },
+      "required": [
+        "ship_date",
+        "mood",
+        "fatigue"
+      ],
+      "title": "MoodEntry",
+      "type": "object"
+    },
+    "MoodInsight": {
+      "additionalProperties": false,
+      "properties": {
+        "insight": {
+          "title": "Insight",
+          "type": "string"
+        },
+        "tip": {
+          "title": "Tip",
+          "type": "string"
+        }
+      },
+      "required": [
+        "insight",
+        "tip"
+      ],
+      "title": "MoodInsight",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "range": {
+      "enum": [
+        "7d",
+        "30d",
+        "90d"
+      ],
+      "title": "Range",
+      "type": "string"
+    },
+    "entries": {
+      "items": {
+        "$ref": "#/$defs/MoodEntry"
+      },
+      "title": "Entries",
+      "type": "array"
+    },
+    "streak_days": {
+      "title": "Streak Days",
+      "type": "integer"
+    },
+    "top_tags": {
+      "items": {
+        "$ref": "#/$defs/CheckinTag"
+      },
+      "title": "Top Tags",
+      "type": "array"
+    },
+    "insight": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/MoodInsight"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    }
+  },
+  "required": [
+    "range",
+    "entries",
+    "streak_days",
+    "top_tags"
+  ],
+  "title": "MoodHistory",
+  "type": "object"
+}

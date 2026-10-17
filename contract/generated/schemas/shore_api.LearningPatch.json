@@ -1,0 +1,235 @@
+{
+  "$defs": {
+    "Audience": {
+      "enum": [
+        "same_vessel",
+        "selected_vessels",
+        "all_vessels"
+      ],
+      "title": "Audience",
+      "type": "string"
+    },
+    "CheckQuestion": {
+      "additionalProperties": false,
+      "properties": {
+        "question": {
+          "title": "Question",
+          "type": "string"
+        },
+        "options": {
+          "items": {
+            "type": "string"
+          },
+          "maxItems": 3,
+          "minItems": 3,
+          "title": "Options",
+          "type": "array"
+        },
+        "correct_index": {
+          "maximum": 2,
+          "minimum": 0,
+          "title": "Correct Index",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "question",
+        "options",
+        "correct_index"
+      ],
+      "title": "CheckQuestion",
+      "type": "object"
+    },
+    "LearningPriority": {
+      "enum": [
+        "normal",
+        "urgent"
+      ],
+      "title": "LearningPriority",
+      "type": "string"
+    },
+    "LearningTags": {
+      "additionalProperties": false,
+      "properties": {
+        "tool": {
+          "default": [],
+          "items": {
+            "type": "string"
+          },
+          "title": "Tool",
+          "type": "array"
+        },
+        "area": {
+          "default": [],
+          "items": {
+            "type": "string"
+          },
+          "title": "Area",
+          "type": "array"
+        },
+        "situation": {
+          "default": [],
+          "items": {
+            "type": "string"
+          },
+          "title": "Situation",
+          "type": "array"
+        }
+      },
+      "title": "LearningTags",
+      "type": "object"
+    },
+    "RankFilter": {
+      "enum": [
+        "all",
+        "officers",
+        "ratings"
+      ],
+      "title": "RankFilter",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "title": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Title"
+    },
+    "context": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Context"
+    },
+    "situation": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Situation"
+    },
+    "do_points": {
+      "anyOf": [
+        {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Do Points"
+    },
+    "dont_points": {
+      "anyOf": [
+        {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Dont Points"
+    },
+    "check_question": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/CheckQuestion"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "tags": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/LearningTags"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "priority": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/LearningPriority"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "audience": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/Audience"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "vessel_ids": {
+      "anyOf": [
+        {
+          "items": {
+            "maxLength": 64,
+            "minLength": 1,
+            "type": "string"
+          },
+          "type": "array"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Vessel Ids"
+    },
+    "rank_filter": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/RankFilter"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    }
+  },
+  "title": "LearningPatch",
+  "type": "object"
+}

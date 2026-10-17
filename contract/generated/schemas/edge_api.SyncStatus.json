@@ -1,0 +1,99 @@
+{
+  "$defs": {
+    "LinkOverride": {
+      "enum": [
+        "auto",
+        "up",
+        "down"
+      ],
+      "title": "LinkOverride",
+      "type": "string"
+    },
+    "LinkStatus": {
+      "enum": [
+        "UP",
+        "DOWN",
+        "UNKNOWN"
+      ],
+      "title": "LinkStatus",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "description": "GET /sync/status (fixes the truncated row in the design doc).",
+  "properties": {
+    "link": {
+      "$ref": "#/$defs/LinkStatus"
+    },
+    "override": {
+      "$ref": "#/$defs/LinkOverride"
+    },
+    "last_probe_at": {
+      "anyOf": [
+        {
+          "format": "date-time",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Last Probe At"
+    },
+    "last_push_at": {
+      "anyOf": [
+        {
+          "format": "date-time",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Last Push At"
+    },
+    "last_pull_at": {
+      "anyOf": [
+        {
+          "format": "date-time",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Last Pull At"
+    },
+    "pending_events": {
+      "title": "Pending Events",
+      "type": "integer"
+    },
+    "pending_media": {
+      "title": "Pending Media",
+      "type": "integer"
+    },
+    "last_push_bytes_gz": {
+      "anyOf": [
+        {
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Last Push Bytes Gz"
+    }
+  },
+  "required": [
+    "link",
+    "override",
+    "pending_events",
+    "pending_media"
+  ],
+  "title": "SyncStatus",
+  "type": "object"
+}

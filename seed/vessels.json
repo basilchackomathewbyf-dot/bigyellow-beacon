@@ -1,0 +1,32 @@
+{
+  "_note": "Synthetic vessels for the POC demo. IDs are fixed; every tier uses them.",
+  "vessels": [
+    {
+      "vessel_id": "v-0007",
+      "code": "0007",
+      "name": "MV Demo Star",
+      "imo": "9000007",
+      "type": "bulk_carrier",
+      "fleet_group": "BYF Demo Fleet",
+      "demo_role": "live demo ship (edge laptop)"
+    },
+    {
+      "vessel_id": "v-0003",
+      "code": "0003",
+      "name": "MV Sister One",
+      "imo": "9000003",
+      "type": "bulk_carrier",
+      "fleet_group": "BYF Demo Fleet",
+      "demo_role": "sister vessel, shore seed only"
+    },
+    {
+      "vessel_id": "v-0005",
+      "code": "0005",
+      "name": "MV Sister Two",
+      "imo": "9000005",
+      "type": "general_cargo",
+      "fleet_group": "BYF Demo Fleet",
+      "demo_role": "sister vessel, shore seed only"
+    }
+  ]
+}

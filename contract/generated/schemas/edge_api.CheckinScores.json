@@ -1,0 +1,37 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "mood": {
+      "maximum": 5,
+      "minimum": 1,
+      "title": "Mood",
+      "type": "integer"
+    },
+    "fatigue": {
+      "maximum": 5,
+      "minimum": 1,
+      "title": "Fatigue",
+      "type": "integer"
+    },
+    "workload": {
+      "anyOf": [
+        {
+          "maximum": 5,
+          "minimum": 1,
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Workload"
+    }
+  },
+  "required": [
+    "mood",
+    "fatigue"
+  ],
+  "title": "CheckinScores",
+  "type": "object"
+}

@@ -1,0 +1,14 @@
+{
+  "draft_id": "0192f0c2-79f0-7a2b-8c11-1f2e3d4c0001",
+  "fields": {
+    "title_en": "Slipped on hydraulic leak near deck crane",
+    "description_en": "Reporter nearly slipped on hydraulic oil near the deck crane. It has happened before.",
+    "location_on_board": "Main deck, crane no. 2, starboard",
+    "hazard_type": "slip_trip_fall",
+    "ism_category": "unsafe_condition",
+    "severity": 3,
+    "immediate_action": null,
+    "occurred_at": null
+  },
+  "share_name_with_master": false
+}

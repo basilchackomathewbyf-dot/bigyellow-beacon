@@ -1,0 +1,173 @@
+{
+  "$defs": {
+    "CheckinAfter": {
+      "additionalProperties": false,
+      "properties": {
+        "supportive_line": {
+          "title": "Supportive Line",
+          "type": "string"
+        },
+        "tip": {
+          "title": "Tip",
+          "type": "string"
+        }
+      },
+      "required": [
+        "supportive_line",
+        "tip"
+      ],
+      "title": "CheckinAfter",
+      "type": "object"
+    },
+    "CheckinScores": {
+      "additionalProperties": false,
+      "properties": {
+        "mood": {
+          "maximum": 5,
+          "minimum": 1,
+          "title": "Mood",
+          "type": "integer"
+        },
+        "fatigue": {
+          "maximum": 5,
+          "minimum": 1,
+          "title": "Fatigue",
+          "type": "integer"
+        },
+        "workload": {
+          "anyOf": [
+            {
+              "maximum": 5,
+              "minimum": 1,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Workload"
+        }
+      },
+      "required": [
+        "mood",
+        "fatigue"
+      ],
+      "title": "CheckinScores",
+      "type": "object"
+    },
+    "RailCategory": {
+      "enum": [
+        "self_harm",
+        "harm_to_others",
+        "abuse",
+        "medical_emergency",
+        "model_output_deny"
+      ],
+      "title": "RailCategory",
+      "type": "string"
+    },
+    "SafetyOutcome": {
+      "additionalProperties": false,
+      "properties": {
+        "rail_hit": {
+          "default": false,
+          "title": "Rail Hit",
+          "type": "boolean"
+        },
+        "category": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/RailCategory"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "fixed_message": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Fixed Message"
+        },
+        "offer_welfare": {
+          "default": false,
+          "title": "Offer Welfare",
+          "type": "boolean"
+        }
+      },
+      "title": "SafetyOutcome",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "checkin_id": {
+      "maxLength": 64,
+      "minLength": 1,
+      "title": "Checkin Id",
+      "type": "string"
+    },
+    "done": {
+      "title": "Done",
+      "type": "boolean"
+    },
+    "prompt": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Prompt"
+    },
+    "scores": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/CheckinScores"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "after": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/CheckinAfter"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "safety": {
+      "$ref": "#/$defs/SafetyOutcome",
+      "default": {
+        "rail_hit": false,
+        "category": null,
+        "fixed_message": null,
+        "offer_welfare": false
+      }
+    }
+  },
+  "required": [
+    "checkin_id",
+    "done"
+  ],
+  "title": "CheckinTurnResponse",
+  "type": "object"
+}

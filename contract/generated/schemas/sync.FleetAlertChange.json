@@ -1,0 +1,63 @@
+{
+  "$defs": {
+    "Severity": {
+      "enum": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "title": "Severity",
+      "type": "integer"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "alert_id": {
+      "maxLength": 64,
+      "minLength": 1,
+      "title": "Alert Id",
+      "type": "string"
+    },
+    "title": {
+      "title": "Title",
+      "type": "string"
+    },
+    "body": {
+      "title": "Body",
+      "type": "string"
+    },
+    "severity": {
+      "$ref": "#/$defs/Severity"
+    },
+    "cluster_id": {
+      "anyOf": [
+        {
+          "maxLength": 64,
+          "minLength": 1,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Cluster Id"
+    },
+    "created_at": {
+      "format": "date-time",
+      "title": "Created At",
+      "type": "string"
+    }
+  },
+  "required": [
+    "alert_id",
+    "title",
+    "body",
+    "severity",
+    "created_at"
+  ],
+  "title": "FleetAlertChange",
+  "type": "object"
+}

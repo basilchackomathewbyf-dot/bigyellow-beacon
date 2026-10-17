@@ -1,0 +1,22 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "learning_id": {
+      "maxLength": 64,
+      "minLength": 1,
+      "title": "Learning Id",
+      "type": "string"
+    },
+    "retracted_at": {
+      "format": "date-time",
+      "title": "Retracted At",
+      "type": "string"
+    }
+  },
+  "required": [
+    "learning_id",
+    "retracted_at"
+  ],
+  "title": "LearningRetractedChange",
+  "type": "object"
+}

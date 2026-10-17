@@ -1,0 +1,91 @@
+{
+  "$defs": {
+    "Language": {
+      "enum": [
+        "en",
+        "hi",
+        "tl",
+        "id",
+        "uk",
+        "zh"
+      ],
+      "title": "Language",
+      "type": "string"
+    },
+    "RankBand": {
+      "enum": [
+        "officer",
+        "rating",
+        "cadet",
+        "crew"
+      ],
+      "title": "RankBand",
+      "type": "string"
+    },
+    "Role": {
+      "enum": [
+        "crew",
+        "master",
+        "shore_reviewer",
+        "shore_admin",
+        "vessel"
+      ],
+      "title": "Role",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "crew_id": {
+      "maxLength": 64,
+      "minLength": 1,
+      "title": "Crew Id",
+      "type": "string"
+    },
+    "display_name": {
+      "title": "Display Name",
+      "type": "string"
+    },
+    "role": {
+      "$ref": "#/$defs/Role"
+    },
+    "rank": {
+      "title": "Rank",
+      "type": "string"
+    },
+    "rank_band": {
+      "$ref": "#/$defs/RankBand"
+    },
+    "language": {
+      "$ref": "#/$defs/Language"
+    },
+    "vessel_id": {
+      "maxLength": 64,
+      "minLength": 1,
+      "title": "Vessel Id",
+      "type": "string"
+    },
+    "vessel_name": {
+      "title": "Vessel Name",
+      "type": "string"
+    },
+    "checkin_reminder_at": {
+      "default": "18:00",
+      "pattern": "^([01]\\d|2[0-3]):[0-5]\\d$",
+      "title": "Checkin Reminder At",
+      "type": "string"
+    }
+  },
+  "required": [
+    "crew_id",
+    "display_name",
+    "role",
+    "rank",
+    "rank_band",
+    "language",
+    "vessel_id",
+    "vessel_name"
+  ],
+  "title": "MeResponse",
+  "type": "object"
+}

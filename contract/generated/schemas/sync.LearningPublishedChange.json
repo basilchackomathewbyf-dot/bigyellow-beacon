@@ -1,0 +1,176 @@
+{
+  "$defs": {
+    "CheckQuestion": {
+      "additionalProperties": false,
+      "properties": {
+        "question": {
+          "title": "Question",
+          "type": "string"
+        },
+        "options": {
+          "items": {
+            "type": "string"
+          },
+          "maxItems": 3,
+          "minItems": 3,
+          "title": "Options",
+          "type": "array"
+        },
+        "correct_index": {
+          "maximum": 2,
+          "minimum": 0,
+          "title": "Correct Index",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "question",
+        "options",
+        "correct_index"
+      ],
+      "title": "CheckQuestion",
+      "type": "object"
+    },
+    "LearningMediaKind": {
+      "enum": [
+        "image",
+        "gif_mp4",
+        "video"
+      ],
+      "title": "LearningMediaKind",
+      "type": "string"
+    },
+    "LearningMediaManifest": {
+      "additionalProperties": false,
+      "properties": {
+        "media_id": {
+          "maxLength": 64,
+          "minLength": 1,
+          "title": "Media Id",
+          "type": "string"
+        },
+        "kind": {
+          "$ref": "#/$defs/LearningMediaKind"
+        },
+        "bytes": {
+          "maximum": 2097152,
+          "title": "Bytes",
+          "type": "integer"
+        },
+        "sha256": {
+          "title": "Sha256",
+          "type": "string"
+        },
+        "duration_s": {
+          "anyOf": [
+            {
+              "maximum": 6.0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Duration S"
+        }
+      },
+      "required": [
+        "media_id",
+        "kind",
+        "bytes",
+        "sha256"
+      ],
+      "title": "LearningMediaManifest",
+      "type": "object"
+    },
+    "LearningPriority": {
+      "enum": [
+        "normal",
+        "urgent"
+      ],
+      "title": "LearningPriority",
+      "type": "string"
+    },
+    "RankFilter": {
+      "enum": [
+        "all",
+        "officers",
+        "ratings"
+      ],
+      "title": "RankFilter",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "learning_id": {
+      "maxLength": 64,
+      "minLength": 1,
+      "title": "Learning Id",
+      "type": "string"
+    },
+    "title": {
+      "title": "Title",
+      "type": "string"
+    },
+    "context": {
+      "title": "Context",
+      "type": "string"
+    },
+    "situation": {
+      "title": "Situation",
+      "type": "string"
+    },
+    "do_points": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Do Points",
+      "type": "array"
+    },
+    "dont_points": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Dont Points",
+      "type": "array"
+    },
+    "check_question": {
+      "$ref": "#/$defs/CheckQuestion"
+    },
+    "priority": {
+      "$ref": "#/$defs/LearningPriority"
+    },
+    "rank_filter": {
+      "$ref": "#/$defs/RankFilter"
+    },
+    "media": {
+      "default": [],
+      "items": {
+        "$ref": "#/$defs/LearningMediaManifest"
+      },
+      "title": "Media",
+      "type": "array"
+    },
+    "published_at": {
+      "format": "date-time",
+      "title": "Published At",
+      "type": "string"
+    }
+  },
+  "required": [
+    "learning_id",
+    "title",
+    "context",
+    "situation",
+    "do_points",
+    "dont_points",
+    "check_question",
+    "priority",
+    "rank_filter",
+    "published_at"
+  ],
+  "title": "LearningPublishedChange",
+  "type": "object"
+}

@@ -1,0 +1,21 @@
+{
+  "ticket_id": "0192f0c2-7a10-7c4e-9a51-3d0b6f8e0001",
+  "ticket_no": "BCN-0007-0012",
+  "title_en": "Slipped on hydraulic leak near deck crane",
+  "description_en": "Reporter nearly slipped on hydraulic oil near the deck crane. It has happened before.",
+  "description_original": "क्रेन के पास हाइड्रोलिक लीक पर मैं फिर से फिसलते-फिसलते बचा।",
+  "original_language": "hi",
+  "location_on_board": "Main deck, crane no. 2, starboard",
+  "hazard_type": "slip_trip_fall",
+  "ism_category": "unsafe_condition",
+  "severity": 3,
+  "immediate_action": null,
+  "occurred_at": null,
+  "created_at": "2026-10-18T05:40:00Z",
+  "onboard_status": "NEW",
+  "shore_status": "QUEUED_FOR_LINK",
+  "rank_band": "rating",
+  "reporter_name": null,
+  "media": [],
+  "actions": []
+}

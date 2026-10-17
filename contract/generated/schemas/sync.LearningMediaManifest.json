@@ -1,0 +1,55 @@
+{
+  "$defs": {
+    "LearningMediaKind": {
+      "enum": [
+        "image",
+        "gif_mp4",
+        "video"
+      ],
+      "title": "LearningMediaKind",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "media_id": {
+      "maxLength": 64,
+      "minLength": 1,
+      "title": "Media Id",
+      "type": "string"
+    },
+    "kind": {
+      "$ref": "#/$defs/LearningMediaKind"
+    },
+    "bytes": {
+      "maximum": 2097152,
+      "title": "Bytes",
+      "type": "integer"
+    },
+    "sha256": {
+      "title": "Sha256",
+      "type": "string"
+    },
+    "duration_s": {
+      "anyOf": [
+        {
+          "maximum": 6.0,
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Duration S"
+    }
+  },
+  "required": [
+    "media_id",
+    "kind",
+    "bytes",
+    "sha256"
+  ],
+  "title": "LearningMediaManifest",
+  "type": "object"
+}

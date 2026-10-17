@@ -1,0 +1,344 @@
+{
+  "$defs": {
+    "HazardType": {
+      "enum": [
+        "slip_trip_fall",
+        "fall_from_height",
+        "ladder_access",
+        "lifting_crane_ops",
+        "mooring_ops",
+        "machinery_hydraulic",
+        "enclosed_space",
+        "fire_electrical",
+        "cargo_chemical",
+        "struck_by_object",
+        "navigation",
+        "other"
+      ],
+      "title": "HazardType",
+      "type": "string"
+    },
+    "IsmCategory": {
+      "description": "Proposed list (pending Kundan / Captain review). Doc example uses unsafe_condition.",
+      "enum": [
+        "unsafe_act",
+        "unsafe_condition",
+        "equipment_failure",
+        "procedure_not_followed",
+        "environmental",
+        "other"
+      ],
+      "title": "IsmCategory",
+      "type": "string"
+    },
+    "Language": {
+      "enum": [
+        "en",
+        "hi",
+        "tl",
+        "id",
+        "uk",
+        "zh"
+      ],
+      "title": "Language",
+      "type": "string"
+    },
+    "RailCategory": {
+      "enum": [
+        "self_harm",
+        "harm_to_others",
+        "abuse",
+        "medical_emergency",
+        "model_output_deny"
+      ],
+      "title": "RailCategory",
+      "type": "string"
+    },
+    "SafetyOutcome": {
+      "additionalProperties": false,
+      "properties": {
+        "rail_hit": {
+          "default": false,
+          "title": "Rail Hit",
+          "type": "boolean"
+        },
+        "category": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/RailCategory"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "fixed_message": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Fixed Message"
+        },
+        "offer_welfare": {
+          "default": false,
+          "title": "Offer Welfare",
+          "type": "boolean"
+        }
+      },
+      "title": "SafetyOutcome",
+      "type": "object"
+    },
+    "Severity": {
+      "enum": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "title": "Severity",
+      "type": "integer"
+    },
+    "SimilarOpenTicket": {
+      "additionalProperties": false,
+      "properties": {
+        "ticket_id": {
+          "maxLength": 64,
+          "minLength": 1,
+          "title": "Ticket Id",
+          "type": "string"
+        },
+        "ticket_no": {
+          "title": "Ticket No",
+          "type": "string"
+        },
+        "title_en": {
+          "title": "Title En",
+          "type": "string"
+        },
+        "similarity": {
+          "maximum": 1,
+          "minimum": 0,
+          "title": "Similarity",
+          "type": "number"
+        }
+      },
+      "required": [
+        "ticket_id",
+        "ticket_no",
+        "title_en",
+        "similarity"
+      ],
+      "title": "SimilarOpenTicket",
+      "type": "object"
+    },
+    "StructuredFields": {
+      "additionalProperties": false,
+      "description": "What Gemma returns. Any field may be null (\"if unsure return null, never guess\").",
+      "properties": {
+        "title_en": {
+          "anyOf": [
+            {
+              "maxLength": 200,
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Title En"
+        },
+        "description_en": {
+          "anyOf": [
+            {
+              "maxLength": 4000,
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Description En"
+        },
+        "location_on_board": {
+          "anyOf": [
+            {
+              "maxLength": 200,
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Location On Board"
+        },
+        "hazard_type": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/HazardType"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "ism_category": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/IsmCategory"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "severity": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Severity"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "immediate_action": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Immediate Action"
+        },
+        "occurred_at": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Occurred At"
+        }
+      },
+      "title": "StructuredFields",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "draft_id": {
+      "maxLength": 64,
+      "minLength": 1,
+      "title": "Draft Id",
+      "type": "string"
+    },
+    "original_language": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/Language"
+        },
+        {
+          "type": "string"
+        }
+      ],
+      "title": "Original Language"
+    },
+    "transcript_original": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Transcript Original"
+    },
+    "fields": {
+      "$ref": "#/$defs/StructuredFields"
+    },
+    "clarifying_question": {
+      "anyOf": [
+        {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "type": "object"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Clarifying Question"
+    },
+    "confidence": {
+      "maximum": 1,
+      "minimum": 0,
+      "title": "Confidence",
+      "type": "number"
+    },
+    "similar_open_ticket": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/SimilarOpenTicket"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "safety": {
+      "$ref": "#/$defs/SafetyOutcome",
+      "default": {
+        "rail_hit": false,
+        "category": null,
+        "fixed_message": null,
+        "offer_welfare": false
+      }
+    },
+    "prompt_version": {
+      "default": "structure/v1",
+      "title": "Prompt Version",
+      "type": "string"
+    },
+    "model": {
+      "default": "unknown",
+      "title": "Model",
+      "type": "string"
+    }
+  },
+  "required": [
+    "draft_id",
+    "original_language",
+    "fields",
+    "confidence"
+  ],
+  "title": "StructureResponse",
+  "type": "object"
+}

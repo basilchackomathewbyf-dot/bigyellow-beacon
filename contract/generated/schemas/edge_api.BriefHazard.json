@@ -1,0 +1,48 @@
+{
+  "$defs": {
+    "Severity": {
+      "enum": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "title": "Severity",
+      "type": "integer"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "ticket_id": {
+      "maxLength": 64,
+      "minLength": 1,
+      "title": "Ticket Id",
+      "type": "string"
+    },
+    "ticket_no": {
+      "title": "Ticket No",
+      "type": "string"
+    },
+    "title_en": {
+      "title": "Title En",
+      "type": "string"
+    },
+    "severity": {
+      "$ref": "#/$defs/Severity"
+    },
+    "age_hours": {
+      "title": "Age Hours",
+      "type": "number"
+    }
+  },
+  "required": [
+    "ticket_id",
+    "ticket_no",
+    "title_en",
+    "severity",
+    "age_hours"
+  ],
+  "title": "BriefHazard",
+  "type": "object"
+}

@@ -1,0 +1,43 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "viewed": {
+      "anyOf": [
+        {
+          "type": "boolean"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Viewed"
+    },
+    "helpful": {
+      "anyOf": [
+        {
+          "type": "boolean"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Helpful"
+    },
+    "saved": {
+      "anyOf": [
+        {
+          "type": "boolean"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Saved"
+    }
+  },
+  "title": "AnchorReact",
+  "type": "object"
+}

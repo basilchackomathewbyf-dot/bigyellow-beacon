@@ -1,0 +1,270 @@
+{
+  "$defs": {
+    "HazardType": {
+      "enum": [
+        "slip_trip_fall",
+        "fall_from_height",
+        "ladder_access",
+        "lifting_crane_ops",
+        "mooring_ops",
+        "machinery_hydraulic",
+        "enclosed_space",
+        "fire_electrical",
+        "cargo_chemical",
+        "struck_by_object",
+        "navigation",
+        "other"
+      ],
+      "title": "HazardType",
+      "type": "string"
+    },
+    "IsmCategory": {
+      "description": "Proposed list (pending Kundan / Captain review). Doc example uses unsafe_condition.",
+      "enum": [
+        "unsafe_act",
+        "unsafe_condition",
+        "equipment_failure",
+        "procedure_not_followed",
+        "environmental",
+        "other"
+      ],
+      "title": "IsmCategory",
+      "type": "string"
+    },
+    "OnboardStatus": {
+      "description": "Owned by the edge (Master).",
+      "enum": [
+        "NEW",
+        "ACKNOWLEDGED",
+        "ACTION_IN_PROGRESS",
+        "RESOLVED_ON_BOARD"
+      ],
+      "title": "OnboardStatus",
+      "type": "string"
+    },
+    "RankBand": {
+      "enum": [
+        "officer",
+        "rating",
+        "cadet",
+        "crew"
+      ],
+      "title": "RankBand",
+      "type": "string"
+    },
+    "RejectReason": {
+      "enum": [
+        "DUPLICATE",
+        "NOT_A_NEAR_MISS",
+        "INSUFFICIENT_INFO",
+        "OUT_OF_SCOPE"
+      ],
+      "title": "RejectReason",
+      "type": "string"
+    },
+    "Severity": {
+      "enum": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "title": "Severity",
+      "type": "integer"
+    },
+    "ShoreStatus": {
+      "description": "Owned by shore-api. QUEUED_FOR_LINK is the only value the edge sets (before first push).",
+      "enum": [
+        "QUEUED_FOR_LINK",
+        "NEW",
+        "IN_REVIEW",
+        "REJECTED",
+        "CLOSED"
+      ],
+      "title": "ShoreStatus",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "description": "No reporter identity of any kind beyond rank band and the opaque reporter_ref.",
+  "properties": {
+    "ticket_id": {
+      "maxLength": 64,
+      "minLength": 1,
+      "title": "Ticket Id",
+      "type": "string"
+    },
+    "ticket_no": {
+      "title": "Ticket No",
+      "type": "string"
+    },
+    "title_en": {
+      "title": "Title En",
+      "type": "string"
+    },
+    "vessel_id": {
+      "maxLength": 64,
+      "minLength": 1,
+      "title": "Vessel Id",
+      "type": "string"
+    },
+    "vessel_name": {
+      "title": "Vessel Name",
+      "type": "string"
+    },
+    "severity": {
+      "$ref": "#/$defs/Severity"
+    },
+    "hazard_type": {
+      "$ref": "#/$defs/HazardType"
+    },
+    "ism_category": {
+      "$ref": "#/$defs/IsmCategory"
+    },
+    "onboard_status": {
+      "$ref": "#/$defs/OnboardStatus"
+    },
+    "shore_status": {
+      "$ref": "#/$defs/ShoreStatus"
+    },
+    "received_at": {
+      "format": "date-time",
+      "title": "Received At",
+      "type": "string"
+    },
+    "similar_count": {
+      "default": 0,
+      "title": "Similar Count",
+      "type": "integer"
+    },
+    "resolved_on_board": {
+      "default": false,
+      "title": "Resolved On Board",
+      "type": "boolean"
+    },
+    "description_en": {
+      "title": "Description En",
+      "type": "string"
+    },
+    "description_original": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Description Original"
+    },
+    "original_language": {
+      "title": "Original Language",
+      "type": "string"
+    },
+    "location_on_board": {
+      "title": "Location On Board",
+      "type": "string"
+    },
+    "immediate_action": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Immediate Action"
+    },
+    "occurred_at": {
+      "anyOf": [
+        {
+          "format": "date-time",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Occurred At"
+    },
+    "rank_band": {
+      "$ref": "#/$defs/RankBand"
+    },
+    "photo_urls": {
+      "default": [],
+      "items": {
+        "type": "string"
+      },
+      "title": "Photo Urls",
+      "type": "array"
+    },
+    "timeline": {
+      "default": [],
+      "items": {
+        "additionalProperties": true,
+        "type": "object"
+      },
+      "title": "Timeline",
+      "type": "array"
+    },
+    "reject_reason": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/RejectReason"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "reject_note": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Reject Note"
+    },
+    "assigned_to": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Assigned To"
+    }
+  },
+  "required": [
+    "ticket_id",
+    "ticket_no",
+    "title_en",
+    "vessel_id",
+    "vessel_name",
+    "severity",
+    "hazard_type",
+    "ism_category",
+    "onboard_status",
+    "shore_status",
+    "received_at",
+    "description_en",
+    "original_language",
+    "location_on_board",
+    "rank_band"
+  ],
+  "title": "ShoreTicketDetail",
+  "type": "object"
+}

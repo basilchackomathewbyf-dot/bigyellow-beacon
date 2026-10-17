@@ -1,0 +1,137 @@
+{
+  "$defs": {
+    "HazardType": {
+      "enum": [
+        "slip_trip_fall",
+        "fall_from_height",
+        "ladder_access",
+        "lifting_crane_ops",
+        "mooring_ops",
+        "machinery_hydraulic",
+        "enclosed_space",
+        "fire_electrical",
+        "cargo_chemical",
+        "struck_by_object",
+        "navigation",
+        "other"
+      ],
+      "title": "HazardType",
+      "type": "string"
+    },
+    "IsmCategory": {
+      "description": "Proposed list (pending Kundan / Captain review). Doc example uses unsafe_condition.",
+      "enum": [
+        "unsafe_act",
+        "unsafe_condition",
+        "equipment_failure",
+        "procedure_not_followed",
+        "environmental",
+        "other"
+      ],
+      "title": "IsmCategory",
+      "type": "string"
+    },
+    "Severity": {
+      "enum": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "title": "Severity",
+      "type": "integer"
+    },
+    "SubmittedFields": {
+      "additionalProperties": false,
+      "description": "What the crew submits after review: the core fields become required.",
+      "properties": {
+        "title_en": {
+          "maxLength": 200,
+          "minLength": 1,
+          "title": "Title En",
+          "type": "string"
+        },
+        "description_en": {
+          "maxLength": 4000,
+          "minLength": 1,
+          "title": "Description En",
+          "type": "string"
+        },
+        "location_on_board": {
+          "maxLength": 200,
+          "minLength": 1,
+          "title": "Location On Board",
+          "type": "string"
+        },
+        "hazard_type": {
+          "$ref": "#/$defs/HazardType"
+        },
+        "ism_category": {
+          "$ref": "#/$defs/IsmCategory"
+        },
+        "severity": {
+          "$ref": "#/$defs/Severity"
+        },
+        "immediate_action": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Immediate Action"
+        },
+        "occurred_at": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Occurred At"
+        }
+      },
+      "required": [
+        "title_en",
+        "description_en",
+        "location_on_board",
+        "hazard_type",
+        "ism_category",
+        "severity"
+      ],
+      "title": "SubmittedFields",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "draft_id": {
+      "maxLength": 64,
+      "minLength": 1,
+      "title": "Draft Id",
+      "type": "string"
+    },
+    "fields": {
+      "$ref": "#/$defs/SubmittedFields"
+    },
+    "share_name_with_master": {
+      "default": false,
+      "title": "Share Name With Master",
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "draft_id",
+    "fields"
+  ],
+  "title": "ReportSubmit",
+  "type": "object"
+}

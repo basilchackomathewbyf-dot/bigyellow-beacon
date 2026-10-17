@@ -1,0 +1,65 @@
+{
+  "$defs": {
+    "InboxKind": {
+      "enum": [
+        "shore_reply",
+        "master_reply",
+        "status_change",
+        "learning",
+        "anchor",
+        "checkin_reminder"
+      ],
+      "title": "InboxKind",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "inbox_id": {
+      "maxLength": 64,
+      "minLength": 1,
+      "title": "Inbox Id",
+      "type": "string"
+    },
+    "kind": {
+      "$ref": "#/$defs/InboxKind"
+    },
+    "ref_id": {
+      "maxLength": 64,
+      "minLength": 1,
+      "title": "Ref Id",
+      "type": "string"
+    },
+    "title": {
+      "title": "Title",
+      "type": "string"
+    },
+    "created_at": {
+      "format": "date-time",
+      "title": "Created At",
+      "type": "string"
+    },
+    "read_at": {
+      "anyOf": [
+        {
+          "format": "date-time",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Read At"
+    }
+  },
+  "required": [
+    "inbox_id",
+    "kind",
+    "ref_id",
+    "title",
+    "created_at"
+  ],
+  "title": "InboxItem",
+  "type": "object"
+}

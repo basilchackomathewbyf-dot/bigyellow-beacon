@@ -1,0 +1,48 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "case_id": {
+      "maxLength": 64,
+      "minLength": 1,
+      "title": "Case Id",
+      "type": "string"
+    },
+    "title": {
+      "title": "Title",
+      "type": "string"
+    },
+    "source": {
+      "title": "Source",
+      "type": "string"
+    },
+    "url": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Url"
+    },
+    "score": {
+      "title": "Score",
+      "type": "number"
+    },
+    "why": {
+      "title": "Why",
+      "type": "string"
+    }
+  },
+  "required": [
+    "case_id",
+    "title",
+    "source",
+    "score",
+    "why"
+  ],
+  "title": "CorpusMatch",
+  "type": "object"
+}

@@ -1,0 +1,38 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "vessel_id": {
+      "maxLength": 64,
+      "minLength": 1,
+      "title": "Vessel Id",
+      "type": "string"
+    },
+    "brief_date": {
+      "format": "date",
+      "title": "Brief Date",
+      "type": "string"
+    },
+    "fleet_context": {
+      "maxLength": 400,
+      "title": "Fleet Context",
+      "type": "string"
+    },
+    "cluster_ids": {
+      "default": [],
+      "items": {
+        "maxLength": 64,
+        "minLength": 1,
+        "type": "string"
+      },
+      "title": "Cluster Ids",
+      "type": "array"
+    }
+  },
+  "required": [
+    "vessel_id",
+    "brief_date",
+    "fleet_context"
+  ],
+  "title": "BriefEnrichmentChange",
+  "type": "object"
+}

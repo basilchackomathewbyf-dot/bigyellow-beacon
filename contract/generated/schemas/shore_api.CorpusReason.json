@@ -1,0 +1,19 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "case_id": {
+      "title": "Case Id",
+      "type": "string"
+    },
+    "why": {
+      "title": "Why",
+      "type": "string"
+    }
+  },
+  "required": [
+    "case_id",
+    "why"
+  ],
+  "title": "CorpusReason",
+  "type": "object"
+}

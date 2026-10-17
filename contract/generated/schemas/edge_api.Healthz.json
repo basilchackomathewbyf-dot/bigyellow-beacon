@@ -1,0 +1,40 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "status": {
+      "enum": [
+        "ok",
+        "degraded"
+      ],
+      "title": "Status",
+      "type": "string"
+    },
+    "edge_version": {
+      "title": "Edge Version",
+      "type": "string"
+    },
+    "models": {
+      "additionalProperties": {
+        "type": "boolean"
+      },
+      "title": "Models",
+      "type": "object"
+    },
+    "ai_mode": {
+      "enum": [
+        "fake",
+        "ollama"
+      ],
+      "title": "Ai Mode",
+      "type": "string"
+    }
+  },
+  "required": [
+    "status",
+    "edge_version",
+    "models",
+    "ai_mode"
+  ],
+  "title": "Healthz",
+  "type": "object"
+}

@@ -1,0 +1,69 @@
+{
+  "analysis_id": "0192f0c6-0000-7000-8000-000000000001",
+  "ticket_id": "0192f0c2-7a10-7c4e-9a51-3d0b6f8e0001",
+  "model": "gemini-2.5-flash",
+  "prompt_version": "analysis/v1",
+  "created_at": "2026-10-18T05:40:00Z",
+  "output": {
+    "summary": "A rating nearly slipped on hydraulic oil at crane 2. It is a repeat leak. Two sister vessels reported the same pattern this week.",
+    "contributing_factors": [
+      "Recurring hydraulic hose leak not repaired",
+      "No drip tray or absorbent at the crane pedestal",
+      "Leak reported verbally, not logged"
+    ],
+    "ism_check": {
+      "current": "unsafe_condition",
+      "suggested": "unsafe_condition",
+      "agrees": true,
+      "reason": "The hazard is a physical condition on deck."
+    },
+    "severity_check": {
+      "current": "3",
+      "suggested": "4",
+      "agrees": false,
+      "reason": "Matched corpus case resulted in a fracture; recurrence raises likelihood."
+    },
+    "corrective_actions": [
+      "Replace the weeping hose on crane 2",
+      "Clean and cordon the area"
+    ],
+    "preventive_actions": [
+      "Fit drip trays at all crane pedestals",
+      "Add hydraulic hose checks to weekly rounds"
+    ],
+    "corpus_match_reasons": [
+      {
+        "case_id": "SYN-ACC-001",
+        "why": "Same precursor: recurring leak at a crane pedestal led to a slip and fracture."
+      }
+    ],
+    "suggest_learning": true
+  },
+  "similar_tickets": [
+    {
+      "ticket_id": "0192e000-0000-7000-8000-000000000301",
+      "ticket_no": "BCN-0003-0041",
+      "vessel_name": "MV Sister One",
+      "title_en": "Oil leaking again near crane 2",
+      "score": 0.91
+    },
+    {
+      "ticket_id": "0192e000-0000-7000-8000-000000000501",
+      "ticket_no": "BCN-0005-0017",
+      "vessel_name": "MV Sister Two",
+      "title_en": "AB slipped at crane pedestal, no drip tray",
+      "score": 0.88
+    }
+  ],
+  "corpus_matches": [
+    {
+      "case_id": "SYN-ACC-001",
+      "title": "Slip on oil-contaminated deck at crane pedestal",
+      "source": "synthetic (MAIB-style)",
+      "url": null,
+      "score": 0.84,
+      "why": "Same precursor: recurring leak at a crane pedestal."
+    }
+  ],
+  "ai_generated": true
+}
