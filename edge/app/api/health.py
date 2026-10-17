@@ -1,37 +1,35 @@
-"""GET /api/v1/health."""
+"""GET /api/v1/healthz and /api/v1/health alias."""
 
 from __future__ import annotations
 
-from datetime import UTC, datetime
-from typing import Annotated
+from beacon_contract.edge_api import Healthz
+from fastapi import APIRouter
 
-from fastapi import APIRouter, Depends
-from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
-
-from app.db.models import SyncState
-from app.db.session import get_session
+from app import __version__
+from app.config import get_settings
 
 router = APIRouter(tags=["health"])
 
 
-@router.get("/health")
-async def health(session: Annotated[AsyncSession, Depends(get_session)]) -> dict:
-    shore_link = "down"
-    result = await session.execute(select(SyncState).where(SyncState.key == "link_mode"))
-    link_mode = result.scalar_one_or_none()
-    if link_mode and link_mode.value == "forced_down":
-        shore_link = "down"
-    else:
-        ok = await session.execute(select(SyncState).where(SyncState.key == "last_link_ok_at"))
-        ok_row = ok.scalar_one_or_none()
-        if ok_row and ok_row.value:
-            shore_link = "up"
+def _healthz() -> Healthz:
+    settings = get_settings()
+    ai_mode = "ollama" if settings.ai == "ollama" else "fake"
+    # Models reported ready only when BEACON_AI=ollama; fake mode is always degraded for models.
+    models_ready = settings.ai == "ollama"
+    return Healthz(
+        status="ok",
+        edge_version=__version__,
+        models={"gemma": models_ready, "whisper": models_ready, "embeddings": models_ready},
+        ai_mode=ai_mode,  # type: ignore[arg-type]
+    )
 
-    # E1: model server not yet running — report not ready.
-    return {
-        "status": "ok",
-        "model_ready": False,
-        "shore_link": shore_link,
-        "edge_time": datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%SZ"),
-    }
+
+@router.get("/healthz", response_model=Healthz)
+async def healthz() -> Healthz:
+    return _healthz()
+
+
+@router.get("/health", response_model=Healthz)
+async def health() -> Healthz:
+    """Alias of /healthz (kept for older clients)."""
+    return _healthz()

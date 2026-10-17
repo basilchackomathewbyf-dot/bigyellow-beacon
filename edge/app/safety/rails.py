@@ -18,7 +18,7 @@ import unicodedata
 from dataclasses import dataclass
 from pathlib import Path
 
-LEXICON_PATH = Path(__file__).with_name("lexicon.json")
+LEXICON_PATH = Path(__file__).resolve().parent / "rules" / "lexicon.json"
 
 
 @dataclass(frozen=True)

@@ -1,4 +1,4 @@
-# E1: db + api only. model and worker land in later milestones.
+# Edge stack: Postgres+pgvector on host :5433. Ollama runs natively on the host.
 services:
   db:
     image: pgvector/pgvector:pg16
@@ -24,24 +24,23 @@ services:
     ports:
       - "0.0.0.0:8080:8080"
     environment:
-      BEACON_VESSEL_ID: VSL-DEMO01
+      BEACON_VESSEL_ID: v-0007
+      BEACON_VESSEL_CODE: "0007"
       BEACON_VESSEL_NAME: "MV Demo Star"
-      BEACON_EDGE_PUBLIC_URL: http://192.168.1.10:8080
+      BEACON_VESSEL_SECRET: demo-vessel-secret-v-0007
+      BEACON_EDGE_URL: https://beacon.ship.local:8443
       BEACON_DATABASE_URL: postgresql+asyncpg://beacon:beacon@db:5432/beacon
-      BEACON_MODEL_URL: http://model:8081
-      BEACON_EDGE_SECRET: change-me
-      BEACON_MASTER_USERNAME: master
-      BEACON_MASTER_PIN: "1234"
-      BEACON_SO_USERNAME: safety
-      BEACON_SO_PIN: "5678"
+      # Generate: python -c "import secrets; print(secrets.token_urlsafe(48))"
+      BEACON_JWT_SECRET: replace-me-with-a-32-plus-char-secret-value!!
+      BEACON_AI: fake
       BEACON_DATA_DIR: /data
-      BEACON_SHIP_WEB_DIST: /app/ship-web
-      BEACON_CONTRACTS_DIR: /app/contracts
-      BEACON_LINK_MODE: auto
+      BEACON_WEB_DIST: /app/crew-web
+      BEACON_ROSTER_FILE: /app/seed/crew_v-0007.json
+      BEACON_LINK_OVERRIDE: auto
       BEACON_K_ANON: "5"
     volumes:
       - api_data:/data
-      - ../contracts:/app/contracts:ro
+      - ../seed:/app/seed:ro
     depends_on:
       db:
         condition: service_healthy

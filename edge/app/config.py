@@ -12,26 +12,33 @@ class Settings(BaseSettings):
         extra="ignore",
     )
 
-    vessel_id: str = "VSL-DEMO01"
+    vessel_id: str = "v-0007"
+    vessel_code: str = "0007"
     vessel_name: str = "MV Demo Star"
-    edge_public_url: str = "http://192.168.1.10:8080"
+    vessel_secret: str = "demo-vessel-secret-v-0007"
+    edge_url: str = "https://beacon.ship.local:8443"
+    edge_public_url: str | None = None
     database_url: str = "postgresql+asyncpg://beacon:beacon@localhost:5433/beacon"
-    model_url: str = "http://model:8081"
-    edge_secret: str = "change-me"
-    master_username: str = "master"
-    master_pin: str = "1234"
-    so_username: str = "safety"
-    so_pin: str = "5678"
-    shore_url: str = ""
-    shore_vessel_key: str = ""
-    sync_interval_s: int = 60
-    link_mode: str = "auto"  # auto | forced_down
-    asr_mode: str = "auto"  # gemma | whisper | auto
+    # Required at startup (≥ 32 chars). Empty default forces explicit env/test setup.
+    jwt_secret: str = ""
+    ai: str = "fake"  # fake | ollama
+    ollama_url: str = "http://localhost:11434"
+    shore_url: str = "http://127.0.0.1:9090"
+    shore_api_key: str = ""
+    link_override: str = "auto"  # auto | up | down
     k_anon: int = 5
-    # Defaults suit no-Docker local dev; compose overrides to /data, /app/...
     data_dir: Path = Path("./data")
-    ship_web_dist: Path = Path("../dashboards/ship-web/dist")
-    contracts_dir: Path = Path("../contracts")
+    web_dist: Path = Path("../web/apps/crew/dist")
+    ship_web_dist: Path | None = None
+    roster_file: Path = Path("../seed/crew_v-0007.json")
+
+    @property
+    def public_edge_url(self) -> str:
+        return self.edge_public_url or self.edge_url
+
+    @property
+    def crew_web_dist(self) -> Path:
+        return self.ship_web_dist or self.web_dist
 
 
 @lru_cache
