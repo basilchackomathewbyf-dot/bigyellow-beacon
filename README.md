@@ -101,48 +101,8 @@ There is no native mobile app. Crew and Master use the **same React PWA**, serve
 
 ## 5. Architecture
 
-```mermaid
-flowchart TB
-  subgraph SHIP["🚢 SHIP · works with no internet"]
-    direction TB
-    PWA["Crew app · React PWA<br/>crew view + Master view<br/>service worker + IndexedDB outbox"]
-    subgraph EDGE["Beacon edge server · FastAPI"]
-      API["API /api/v1<br/>auth · reports · master · checkins · learnings · inbox"]
-      RAILS["Safety rails<br/>before + after every model call"]
-      SSE["SSE hub<br/>live alerts"]
-      GEMMA["Gemma 3n / Gemma 3 vision<br/>via Ollama"]
-      STT["faster-whisper<br/>speech to text"]
-      EMB["EmbeddingGemma<br/>similar-report search"]
-      DB[("Postgres 16 + pgvector")]
-      OUTBOX["Transactional outbox"]
-      SYNC["Sync worker<br/>HMAC-signed push / pull"]
-    end
-    PWA <-- "HTTPS REST + SSE<br/>ship Wi-Fi" --> API
-    API --> RAILS --> GEMMA
-    API --> STT
-    API --> EMB
-    API --> DB
-    API --> SSE
-    DB --> OUTBOX --> SYNC
-  end
+<img width="2460" height="1290" alt="image" src="https://github.com/user-attachments/assets/6bc8a4fc-3b66-42d3-ac13-0deb5c4d0256" />
 
-  SYNC <-- "VSAT, when the link is up<br/>push ~1 KB deltas · pull replies, status, learnings" --> SHORE_API
-
-  subgraph CLOUD["☁️ SHORE · Google Cloud"]
-    direction TB
-    SHORE_API["shore-api · Cloud Run (FastAPI)<br/>never receives crew identity"]
-    GEMINI["Gemini · Vertex AI<br/>analysis, clusters, learning drafts"]
-    SQL[("Cloud SQL Postgres + pgvector<br/>tickets, accident corpus, k ≥ 5 views")]
-    GCS[("Cloud Storage<br/>photos, learning media · signed URLs")]
-    SM["Secret Manager"]
-    DASH["Beacon Dashboard · React"]
-    SHORE_API --> GEMINI
-    SHORE_API --> SQL
-    SHORE_API --> GCS
-    SHORE_API --> SM
-    DASH <--> SHORE_API
-  end
-```
 
 **Key design rules**
 - **Crew-facing AI runs on board.** A report never waits for a satellite link.
