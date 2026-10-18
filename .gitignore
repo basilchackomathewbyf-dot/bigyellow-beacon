@@ -2,6 +2,7 @@
 .env
 .env.*
 !.env.example
+envs/*.env
 envs/*.local
 __pycache__/
 *.py[cod]
@@ -9,3 +10,6 @@ __pycache__/
 node_modules/
 dist/
 .output/
+.pytest_cache/
+.ruff_cache/
+*.egg-info/

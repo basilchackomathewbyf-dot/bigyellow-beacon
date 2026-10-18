@@ -1,6 +1,6 @@
 # BigYellow Beacon
 
-Empty layout for the Beacon services. This branch has no application code.
+Empty layout for Beacon development. This branch has no application code.
 
 | Path | What |
 |---|---|
@@ -12,4 +12,4 @@ Empty layout for the Beacon services. This branch has no application code.
 | `envs/` | Local environment files. Do not commit secrets |
 | `etc/` | Sample config and ops notes |
 
-The existing POC stays on `develop`.
+The current POC stays on `develop`.
