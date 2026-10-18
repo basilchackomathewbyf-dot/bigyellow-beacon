@@ -1,5 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useTranslation, Trans } from "react-i18next";
 import { ArrowRight, ArrowUp, Check, ChevronDown, Loader2, Mic, PartyPopper, ShieldCheck, Sparkles, Square, Trash2, X } from "lucide-react";
 import { toast } from "sonner";
 import { useAnswerDraft, useCreateDraft, useStructure, useSubmitReport } from "@/hooks/queries";
@@ -39,6 +40,7 @@ function BeaconSays({ children }: { children: React.ReactNode }) {
 const bubble = "rounded-3xl rounded-tl-md bg-card px-4 py-3 text-[15px] shadow-soft";
 
 function Report() {
+  const { t } = useTranslation();
   const [phase, setPhase] = useState<Phase>("compose");
   const [text, setText] = useState("");
   const [photos, setPhotos] = useState<Blob[]>([]);
@@ -89,7 +91,10 @@ function Report() {
       setDraftId(d.draft_id);
       const s = await struct.mutateAsync(d.draft_id);
       setStructure(s);
-      setFields(s.fields);
+      setFields({
+        ...s.fields,
+        description_en: s.fields.description_en || s.transcript_original || "",
+      });
       setPhase("review");
     } catch (ex: unknown) {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -136,11 +141,18 @@ function Report() {
           </div>
         </div>
         <h1 className="mt-3 text-3xl font-extrabold tracking-tight">What happened?</h1>
-        <p className="mt-1 text-muted-foreground">Speak, type or attach — any mix works.</p>
+        <p className="mt-1 text-muted-foreground">{t("report.capture.subtitle")}</p>
       </header>
 
       <div className="flex-1 space-y-4 pb-28 lg:pb-6">
-        <BeaconSays><p className={bubble}>Hi — tell me what you saw. Tap the <b>mic</b> to talk, or tap the <b>paperclip</b> for photos.</p></BeaconSays>
+        <BeaconSays>
+          <p className={bubble}>
+            <Trans
+              i18nKey="report.capture.greeting"
+              components={{ b: <strong /> }}
+            />
+          </p>
+        </BeaconSays>
 
         {phase !== "compose" && (
           <div className="flex justify-end rise">
@@ -177,11 +189,24 @@ function Report() {
                   <span className={{ low: "text-sev-low", mid: "text-warn", high: "text-sev-high" }[severityTone(fields.severity)]}>{fields.severity} · {SEVERITY[fields.severity]}</span></div>
                 <Slider min={1} max={5} step={1} value={[fields.severity]} onValueChange={([v]) => set("severity", v as ReportFields["severity"])} aria-label="Severity" />
               </div>
-              <Textarea value={fields.immediate_action} onChange={(e) => set("immediate_action", e.target.value)} placeholder="What did you do straight away?" aria-label="Immediate action" className="min-h-16 rounded-xl bg-muted/60" />
-              {structure && structure.transcript_original !== fields.description_en && (
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold text-muted-foreground">Description</label>
+                <Textarea
+                  value={fields.description_en}
+                  onChange={(e) => set("description_en", e.target.value)}
+                  placeholder="Describe what happened..."
+                  aria-label="Description"
+                  className="min-h-28 rounded-xl bg-muted/60 text-sm leading-relaxed"
+                />
+              </div>
+              {structure && structure.original_language && structure.original_language.toLowerCase() !== "en" && structure.transcript_original && structure.transcript_original !== fields.description_en && (
                 <Collapsible>
-                  <CollapsibleTrigger className="flex items-center gap-1 text-xs font-semibold text-primary">Original ({structure.original_language.toUpperCase()}) <ChevronDown className="size-3.5" /></CollapsibleTrigger>
-                  <CollapsibleContent className="mt-1.5 text-sm text-muted-foreground">{structure.transcript_original}</CollapsibleContent>
+                  <CollapsibleTrigger className="flex items-center gap-1 text-xs font-semibold text-primary">
+                    Original ({structure.original_language.toUpperCase()}) <ChevronDown className="size-3.5" />
+                  </CollapsibleTrigger>
+                  <CollapsibleContent className="mt-1.5 rounded-xl bg-muted/40 p-2.5 text-xs text-muted-foreground">
+                    {structure.transcript_original}
+                  </CollapsibleContent>
                 </Collapsible>
               )}
             </div>
@@ -274,7 +299,7 @@ function Report() {
             ) : (
               <Textarea ref={taRef} rows={1} value={text} onChange={(e) => setText(e.target.value)}
                 onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); e.currentTarget.form?.requestSubmit(); } }}
-                placeholder={question ? "Type your answer" : "Describe what happened…"} aria-label="Message"
+                placeholder={question ? "Type your answer" : t("report.capture.inputPlaceholder")} aria-label="Message"
                 className="max-h-32 min-h-11 min-w-0 flex-1 resize-none border-0 bg-transparent py-3 text-[15px] shadow-none focus-visible:ring-0" />
             )}
             {phase === "compose" && (

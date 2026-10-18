@@ -24,4 +24,21 @@ describe("Beacon rules", () => {
     await startCheckin({ mode: "quick", mood: 4 });
     await expect(startCheckin({ mode: "quick", mood: 3 })).rejects.toMatchObject({ status: 409 });
   });
+  it("provides multilingual report capture keys with bold tags for mic and paperclip", async () => {
+    const { default: en } = await import("@/i18n/locales/en");
+    const { default: hi } = await import("@/i18n/locales/hi");
+
+    expect(en.report.capture.greeting).toBe(
+      "Hi, tell me what you saw, in any language you like. Tap the <b>mic</b> to talk, or the <b>paperclip</b> to add photos."
+    );
+    expect(en.report.capture.subtitle).toBe(
+      "Speak or type in any language, and add photos if you like."
+    );
+    expect(en.report.capture.inputPlaceholder).toBe("Type in any language…");
+
+    expect(hi.report.capture.greeting).toContain("<b>");
+    expect(hi.report.capture.greeting).toContain("</b>");
+    expect(hi.report.capture.subtitle.length).toBeGreaterThan(0);
+    expect(hi.report.capture.inputPlaceholder.length).toBeGreaterThan(0);
+  });
 });

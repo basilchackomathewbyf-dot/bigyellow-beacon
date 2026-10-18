@@ -1,19 +1,18 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
+import { z } from "zod";
 import { Camera, Check, Loader2 } from "lucide-react";
 import { toast } from "sonner";
-import { z } from "zod";
 import { useAckTicket, useAddAction, useMasterTickets } from "@/hooks/queries";
-import type { OnboardStatus, Ticket } from "@/api/types";
-import { ONBOARD, RANKS, timeAgo } from "@/lib/labels";
-import { ListSkeleton, PageHeader, SeverityPill, ShoreChip, severityBar, Section } from "@/components/beacon/bits";
-import { TicketBody } from "@/components/beacon/TicketBody";
-import { Thread } from "@/components/beacon/Thread";
+import { RANKS, timeAgo } from "@/lib/labels";
+import type { Ticket } from "@/api/types";
 import { CameraSheet } from "@/media/CameraSheet";
+import { Thread } from "@/components/beacon/Thread";
+import { ListSkeleton, PageHeader, Section, SeverityPill, ShoreChip, severityBar } from "@/components/beacon/bits";
+import { TicketBody } from "@/components/beacon/TicketBody";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 
@@ -23,7 +22,42 @@ export const Route = createFileRoute("/_app/master/board")({
   component: Board,
 });
 
-const COLS: OnboardStatus[] = ["SUBMITTED", "ACKNOWLEDGED", "ACTION_IN_PROGRESS", "RESOLVED_ON_BOARD"];
+interface ColumnDef {
+  id: "NEW" | "ACKNOWLEDGED" | "RESOLVED_BY_SHORE";
+  label: string;
+  match: (t: Ticket) => boolean;
+}
+
+const isResolvedByShore = (t: Ticket) =>
+  t.shore_status === "CLOSED" ||
+  (t.shore_status as string) === "RESOLVED" ||
+  (t.shore_status as string) === "RESOLVED_BY_SHORE" ||
+  t.onboard_status === "RESOLVED_ON_BOARD";
+
+const COLS: ColumnDef[] = [
+  {
+    id: "NEW",
+    label: "NEW",
+    match: (t) =>
+      !isResolvedByShore(t) &&
+      (t.onboard_status === "SUBMITTED" || (t.onboard_status as string) === "NEW"),
+  },
+  {
+    id: "ACKNOWLEDGED",
+    label: "ACKNOWLEDGED",
+    match: (t) =>
+      !isResolvedByShore(t) &&
+      (t.onboard_status === "ACKNOWLEDGED" ||
+        t.onboard_status === "ACTION_IN_PROGRESS" ||
+        (t.onboard_status as string) === "ACTION_ASSIGNED" ||
+        (t.onboard_status as string) === "ACTIONED"),
+  },
+  {
+    id: "RESOLVED_BY_SHORE",
+    label: "RESOLVED BY SHORE",
+    match: isResolvedByShore,
+  },
+];
 
 function Card({ t, onOpen }: { t: Ticket; onOpen: () => void }) {
   return (
@@ -41,25 +75,48 @@ function Board() {
   const { t: openId } = Route.useSearch();
   const nav = useNavigate({ from: Route.fullPath });
   const q = useMasterTickets();
-  const [seg, setSeg] = useState<OnboardStatus>("SUBMITTED");
+  const [seg, setSeg] = useState<ColumnDef["id"]>("NEW");
   const open = q.data?.find((x) => x.id === openId);
   const setOpen = (id?: string) => nav({ search: { t: id }, replace: true });
-  const col = (s: OnboardStatus) => q.data?.filter((t) => t.onboard_status === s) ?? [];
+  const getColTickets = (colId: ColumnDef["id"]) => {
+    const colDef = COLS.find((c) => c.id === colId);
+    return q.data?.filter((t) => (colDef ? colDef.match(t) : false)) ?? [];
+  };
 
   return (
     <div className="lg:max-w-none">
-      <PageHeader title="Near-misses" subtitle={`${q.data?.filter((t) => t.onboard_status !== "RESOLVED_ON_BOARD").length ?? "–"} open on board`} />
+      <PageHeader title="Near-misses" subtitle={`${q.data?.filter((t) => !isResolvedByShore(t)).length ?? "–"} open on board`} />
       {q.isLoading ? <ListSkeleton /> : (
         <>
           <div className="mb-4 flex gap-1 overflow-x-auto rounded-2xl bg-muted p-1 md:hidden">
-            {COLS.map((s) => <button key={s} onClick={() => setSeg(s)} className={cn("tap shrink-0 rounded-xl px-3 text-xs font-medium", seg === s ? "bg-card shadow-soft" : "text-muted-foreground")}>{ONBOARD[s]} · {col(s).length}</button>)}
+            {COLS.map((col) => (
+              <button
+                key={col.id}
+                onClick={() => setSeg(col.id)}
+                className={cn(
+                  "tap shrink-0 rounded-xl px-3 text-xs font-medium",
+                  seg === col.id ? "bg-card shadow-soft" : "text-muted-foreground"
+                )}
+              >
+                {col.label} · {getColTickets(col.id).length}
+              </button>
+            ))}
           </div>
-          <div className="space-y-3 md:hidden">{col(seg).map((t) => <Card key={t.id} t={t} onOpen={() => setOpen(t.id)} />)}</div>
-          <div className="hidden gap-4 md:grid md:grid-cols-4">
-            {COLS.map((s) => (
-              <div key={s} className="space-y-3">
-                <p className="flex items-center justify-between px-1 text-xs font-semibold uppercase tracking-wider text-muted-foreground">{ONBOARD[s]}<span className="rounded-full bg-muted px-2 py-0.5">{col(s).length}</span></p>
-                {col(s).map((t) => <Card key={t.id} t={t} onOpen={() => setOpen(t.id)} />)}
+          <div className="space-y-3 md:hidden">
+            {getColTickets(seg).map((t) => (
+              <Card key={t.id} t={t} onOpen={() => setOpen(t.id)} />
+            ))}
+          </div>
+          <div className="hidden gap-4 md:grid md:grid-cols-3">
+            {COLS.map((col) => (
+              <div key={col.id} className="space-y-3">
+                <p className="flex items-center justify-between px-1 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                  {col.label}
+                  <span className="rounded-full bg-muted px-2 py-0.5">{getColTickets(col.id).length}</span>
+                </p>
+                {getColTickets(col.id).map((t) => (
+                  <Card key={t.id} t={t} onOpen={() => setOpen(t.id)} />
+                ))}
               </div>
             ))}
           </div>
@@ -80,13 +137,12 @@ function Drawer({ t }: { t: Ticket }) {
   const [text, setText] = useState("");
   const [rank, setRank] = useState("Bosun");
   const [due, setDue] = useState(() => new Date(Date.now() + 86_400_000).toISOString().slice(0, 16));
-  const [resolve, setResolve] = useState(false);
   const [photo, setPhoto] = useState<Blob | null>(null);
   const [cam, setCam] = useState(false);
   const save = async () => {
-    await add.mutateAsync({ id: t.id, text, responsible_rank: rank, due_at: new Date(due).toISOString(), resolve, photo: photo ?? undefined });
-    setText(""); setPhoto(null); setResolve(false);
-    toast.success(resolve ? "Marked resolved on board." : "Action added.");
+    await add.mutateAsync({ id: t.id, text, responsible_rank: rank, due_at: new Date(due).toISOString(), resolve: false, photo: photo ?? undefined });
+    setText(""); setPhoto(null);
+    toast.success("Action added.");
   };
   return (
     <div className="space-y-6 pb-8">
@@ -100,7 +156,7 @@ function Drawer({ t }: { t: Ticket }) {
       )}
       <TicketBody t={t} />
       <div className="flex items-center gap-2 rounded-xl bg-muted/60 p-3 text-sm">Shore status (read-only): <ShoreChip s={t.shore_status} /></div>
-      {t.onboard_status !== "RESOLVED_ON_BOARD" && (
+      {!isResolvedByShore(t) && (
         <Section title="Add action">
           <div className="space-y-3 rounded-2xl border p-4">
             <Input value={text} onChange={(e) => setText(e.target.value)} placeholder="What will be done?" className="h-11 rounded-xl" aria-label="Action" />
@@ -112,7 +168,6 @@ function Drawer({ t }: { t: Ticket }) {
               <Button type="button" variant="secondary" className="h-11 rounded-xl" onClick={() => setCam(true)}><Camera className="size-4" />{photo ? "Retake photo" : "Photo of the fix"}</Button>
               {photo && <img src={URL.createObjectURL(photo)} alt="Fix" className="size-11 rounded-lg object-cover" />}
             </div>
-            <label className="flex items-center gap-2 text-sm"><Checkbox checked={resolve} onCheckedChange={(v) => setResolve(!!v)} />Mark resolved on board</label>
             <Button className="h-11 w-full rounded-xl" disabled={!text || add.isPending} onClick={save}>Save action</Button>
           </div>
           <CameraSheet open={cam} onOpenChange={setCam} remaining={1} onCapture={setPhoto} />

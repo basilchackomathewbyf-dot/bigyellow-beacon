@@ -107,7 +107,7 @@ export interface Learning {
   situation: string;
   do_points: string[];
   dont_points: string[];
-  media: { kind: "image" | "gif" | "video"; url: string };
+  media?: { kind?: "image" | "gif" | "video"; url?: string } | null;
   check_question: { q: string; options: string[]; answer_index: number };
   priority: "normal" | "urgent";
   acked: boolean;
