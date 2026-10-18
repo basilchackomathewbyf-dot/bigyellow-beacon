@@ -15,4 +15,5 @@ dist/
 *.egg-info/
 .lovable
 *.sh
+!deploy.sh
 DEPLOYMENT_PLAN.md
