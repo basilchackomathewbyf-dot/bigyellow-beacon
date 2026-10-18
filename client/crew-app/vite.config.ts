@@ -13,6 +13,9 @@ export default defineConfig({
     server: { entry: "server" },
   },
   vite: {
+    server: {
+      allowedHosts: true,
+    },
     // Pre-bundle up front so the dev server never re-optimizes mid-session
     // (a late re-optimize loads two React copies -> "reading 'useState'" crash).
     optimizeDeps: {
