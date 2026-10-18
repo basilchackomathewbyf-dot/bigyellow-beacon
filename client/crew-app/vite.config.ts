@@ -14,7 +14,17 @@ export default defineConfig({
   },
   vite: {
     server: {
-      allowedHosts: true,
+      host: true,
+      allowedHosts: [
+        "beacon.bigyellow.ai",
+        "beacon-dashboard.bigyellow.ai",
+        "beacon-ws.bigyellow.ai",
+        ".bigyellow.ai",
+        "35.254.60.253",
+        ".sslip.io",
+        "localhost",
+        "127.0.0.1",
+      ],
     },
     // Pre-bundle up front so the dev server never re-optimizes mid-session
     // (a late re-optimize loads two React copies -> "reading 'useState'" crash).

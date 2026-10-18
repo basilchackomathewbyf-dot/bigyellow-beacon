@@ -10,7 +10,17 @@ export default defineConfig({
   vite: {
     base: "/dashboard/",
     server: {
-      allowedHosts: true,
+      host: true,
+      allowedHosts: [
+        "beacon.bigyellow.ai",
+        "beacon-dashboard.bigyellow.ai",
+        "beacon-ws.bigyellow.ai",
+        ".bigyellow.ai",
+        "35.254.60.253",
+        ".sslip.io",
+        "localhost",
+        "127.0.0.1",
+      ],
     },
   },
   tanstackStart: {
