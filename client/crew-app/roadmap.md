@@ -1,0 +1,12 @@
+# Roadmap
+- [x] Build full brief with live mic and camera
+- [x] Verify every page and menu opens end to end
+- [x] Make menus load fast (remove fake delay, cache pages)
+- [x] Colourful theme, new logo, one-flow report, username login + logout
+- [x] Make "Looks right" unmistakably a button (not chat text), clear of the nav bar
+- [x] Learn cards: same size for every block, remove the Save button
+- [x] Home: vivid check-in block with real icons (sky scale, tags, sleep), no emoji boxes
+- [x] Home: equal-size blocks, no content wider than the phone (grid overflow fixed)
+- [x] Offline: "Waiting to send" panel that clears itself once the ship reconnects
+- [x] Profile: journey of daily check-ins (streak, count, 14-day mood grid, tags, insight)
+- [x] Floating nav made opaque so page text no longer bleeds through

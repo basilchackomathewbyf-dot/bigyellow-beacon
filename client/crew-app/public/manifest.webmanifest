@@ -1,0 +1,9 @@
+{
+  "name": "BigYellow Beacon",
+  "short_name": "Beacon",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#FFF8EC",
+  "theme_color": "#0E8A8A",
+  "icons": [{ "src": "/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }]
+}
