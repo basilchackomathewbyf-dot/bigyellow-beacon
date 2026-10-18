@@ -113,7 +113,7 @@ if [ "$DO_FRONTENDS" = true ]; then
     if [ -d "$ROOT_DIR/client/crew-app" ]; then
         echo -e "  📦 Building Crew App (Nitro Node Server)..."
         cd "$ROOT_DIR/client/crew-app"
-        pnpm install --quiet
+        pnpm install
         NITRO_PRESET=node-server pnpm build
         echo -e "${GREEN}  ✓ Crew App built successfully.${NC}"
     fi
@@ -122,7 +122,7 @@ if [ "$DO_FRONTENDS" = true ]; then
     if [ -d "$ROOT_DIR/client/dashboard" ]; then
         echo -e "  📦 Building Shore Dashboard (Nitro Node Server)..."
         cd "$ROOT_DIR/client/dashboard"
-        pnpm install --quiet
+        pnpm install
         NITRO_PRESET=node-server pnpm build
         echo -e "${GREEN}  ✓ Shore Dashboard built successfully.${NC}"
     fi
@@ -136,9 +136,21 @@ cd "$ROOT_DIR"
 
 if command -v systemctl >/dev/null 2>&1; then
     sudo systemctl daemon-reload
-    sudo systemctl restart beacon-shore beacon-edge beacon-crew beacon-dashboard
-    sudo nginx -t && sudo systemctl reload nginx
-    echo -e "${GREEN}✓ All services restarted.${NC}"
+    SERVICES_TO_RESTART=()
+    if [ "$DO_BACKENDS" = true ]; then
+        SERVICES_TO_RESTART+=(beacon-shore beacon-edge)
+    fi
+    if [ "$DO_FRONTENDS" = true ]; then
+        SERVICES_TO_RESTART+=(beacon-crew beacon-dashboard)
+    fi
+    if [ ${#SERVICES_TO_RESTART[@]} -eq 0 ]; then
+        SERVICES_TO_RESTART=(beacon-shore beacon-edge beacon-crew beacon-dashboard)
+    fi
+    sudo systemctl restart "${SERVICES_TO_RESTART[@]}"
+    if command -v nginx >/dev/null 2>&1; then
+        sudo nginx -t && sudo systemctl reload nginx
+    fi
+    echo -e "${GREEN}✓ Target services (${SERVICES_TO_RESTART[*]}) restarted.${NC}"
 else
     echo -e "${RED}⚠️ systemctl not found; skipping service restart.${NC}"
 fi
@@ -153,8 +165,14 @@ sleep 2
 check_health() {
     local name="$1"
     local url="$2"
-    local status
-    status=$(curl -s -o /dev/null -w "%{http_code}" "$url" 2>/dev/null || echo "FAIL")
+    local status="000"
+    for i in 1 2 3; do
+        status=$(curl -s -o /dev/null -w "%{http_code}" "$url" 2>/dev/null || echo "000")
+        if [ "$status" = "200" ] || [ "$status" = "301" ] || [ "$status" = "302" ] || [ "$status" = "307" ]; then
+            break
+        fi
+        sleep 1
+    done
     if [ "$status" = "200" ] || [ "$status" = "301" ] || [ "$status" = "302" ] || [ "$status" = "307" ]; then
         echo -e "  ${GREEN}● ${name}${NC} ($url) ➔ ${GREEN}ONLINE (HTTP $status)${NC}"
     else
