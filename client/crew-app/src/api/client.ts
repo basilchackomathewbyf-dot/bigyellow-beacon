@@ -20,6 +20,20 @@ const uuid = () =>
     ? crypto.randomUUID()
     : `${Date.now()}-${Math.random().toString(16).slice(2)}`;
 
+export function buildUrl(path: string): string {
+  const cleanPath = path.startsWith("/") ? path : `/${path}`;
+  const base = API_BASE_URL.replace(/\/+$/, "");
+  const full = `${base}${cleanPath}`;
+  if (full.startsWith("http://") || full.startsWith("https://")) {
+    return full;
+  }
+  const origin =
+    typeof window !== "undefined"
+      ? window.location.origin
+      : (typeof process !== "undefined" && process.env?.INTERNAL_ORIGIN) || "http://127.0.0.1";
+  return new URL(full, origin).toString();
+}
+
 /** Thin fetch wrapper used when USE_MOCK is false. */
 export async function api<T>(
   method: "GET" | "POST" | "PUT" | "DELETE",
@@ -35,7 +49,7 @@ export async function api<T>(
     headers["Content-Type"] = "application/json";
     payload = JSON.stringify(body);
   }
-  const res = await fetch(`${API_BASE_URL}${path}`, { method, headers, body: payload });
+  const res = await fetch(buildUrl(path), { method, headers, body: payload });
   if (!res.ok) {
     const text = await res.text();
     let message = text;

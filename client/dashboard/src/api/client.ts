@@ -17,7 +17,17 @@ type Query = Record<string, string | number | string[] | number[] | undefined>;
 function buildUrl(path: string, query?: Query) {
   const base = API_BASE_URL.replace(/\/+$/, "");
   const cleanPath = path.startsWith("/") ? path : `/${path}`;
-  const url = new URL(base + cleanPath);
+  const full = `${base}${cleanPath}`;
+  let url: URL;
+  if (full.startsWith("http://") || full.startsWith("https://")) {
+    url = new URL(full);
+  } else {
+    const origin =
+      typeof window !== "undefined"
+        ? window.location.origin
+        : (typeof process !== "undefined" && process.env?.INTERNAL_ORIGIN) || "http://127.0.0.1";
+    url = new URL(full, origin);
+  }
   if (query) {
     for (const [k, v] of Object.entries(query)) {
       if (v === undefined || v === "") continue;

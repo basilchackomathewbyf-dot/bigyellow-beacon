@@ -26,7 +26,11 @@ function ensureEventSource() {
   if (!token || eventSource) return;
 
   try {
-    const url = `${API_BASE_URL}/events?token=${encodeURIComponent(token)}`;
+    const cleanBase = API_BASE_URL.replace(/\/+$/, "");
+    const full = `${cleanBase}/events?token=${encodeURIComponent(token)}`;
+    const url = full.startsWith("http://") || full.startsWith("https://")
+      ? full
+      : new URL(full, window.location.origin).toString();
     eventSource = new EventSource(url);
 
     const eventNames: (keyof BeaconEvents)[] = [
