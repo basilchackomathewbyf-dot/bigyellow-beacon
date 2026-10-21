@@ -77,6 +77,8 @@ export interface StructureResult {
   fields: ReportFields;
   clarifying_question?: string;
   confidence: number;
+  /** True when edge used FALLBACK_TRANSCRIPT after empty/failed Whisper ASR. */
+  asr_fallback_used?: boolean;
 }
 
 export interface DraftInput {

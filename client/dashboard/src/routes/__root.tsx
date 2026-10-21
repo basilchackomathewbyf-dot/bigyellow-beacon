@@ -4,6 +4,7 @@ import {
   Link,
   createRootRouteWithContext,
   useRouter,
+  useRouterState,
   HeadContent,
   Scripts,
   type ErrorComponentProps,
@@ -16,6 +17,7 @@ import { reportLovableError } from "../lib/lovable-error-reporting";
 import i18n from "@/i18n";
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { initAnalytics, track, trackPageView } from "@/lib/analytics";
 
 function NotFoundComponent() {
   return (
@@ -39,6 +41,7 @@ function ErrorComponent({ error, reset }: ErrorComponentProps) {
   const router = useRouter();
   useEffect(() => {
     reportLovableError(error, { boundary: "tanstack_root_error_component" });
+    track("app_error", { boundary: "root" });
   }, [error]);
 
   return (
@@ -103,6 +106,17 @@ function RootShell({ children }: { children: ReactNode }) {
   );
 }
 
+function AnalyticsListener() {
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
+  useEffect(() => {
+    initAnalytics();
+  }, []);
+  useEffect(() => {
+    trackPageView(pathname);
+  }, [pathname]);
+  return null;
+}
+
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
 
@@ -110,6 +124,7 @@ function RootComponent() {
     <QueryClientProvider client={queryClient}>
       <I18nextProvider i18n={i18n}>
         <TooltipProvider delayDuration={200}>
+          <AnalyticsListener />
           <Outlet />
           <Toaster position="bottom-right" richColors closeButton />
         </TooltipProvider>

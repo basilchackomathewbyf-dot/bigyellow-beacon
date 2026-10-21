@@ -63,8 +63,63 @@ Verify with `ollama list`.
 | `WHISPER_DEVICE` | `cuda` | Falls back to `small`/CPU/int8 automatically |
 | `WHISPER_COMPUTE_TYPE` | `float16` | CUDA compute type |
 
-Note: when running under systemd, the service unit must inherit the CUDA library path
-(e.g. the `gpu.conf` drop-in setting `LD_LIBRARY_PATH` for cuBLAS/cuDNN) so Whisper can use the GPU.
+### GPU / Whisper setup (Tesla T4 / CUDA 12)
+
+faster-whisper 1.2.x needs **PyAV &lt; 15** (`av.open(..., metadata_errors=...)` was removed in PyAV 15+). CTranslate2 on GPU also needs CUDA 12 cuBLAS/cuDNN wheels on `LD_LIBRARY_PATH`.
+
+```bash
+cd server/edge
+source .venv/bin/activate   # or your edge venv
+
+# 1) Pin PyAV (binary wheel) — required for decode
+pip install --only-binary=:all: "av>=12,<15"
+
+# 2) CUDA 12 libs used by CTranslate2 (optional extra)
+pip install nvidia-cublas-cu12 "nvidia-cudnn-cu12==9.*"
+# equivalent: pip install -e ".[gpu]"
+
+# 3) Confirm GPU visible
+nvidia-smi
+
+# 4) One-line CUDA Whisper smoke test (~few seconds after model download)
+python -c "from faster_whisper import WhisperModel; m=WhisperModel('medium', device='cuda', compute_type='float16'); print('ok', m)"
+```
+
+**systemd:** `run_edge.sh` prepends
+`<venv>/lib/python3.12/site-packages/nvidia/{cublas,cudnn}/lib` to `LD_LIBRARY_PATH` when those dirs exist (CPU-only hosts are unchanged). Optional drop-in if the unit does not call `run_edge.sh`:
+
+```bash
+sudo systemctl edit beacon-edge
+```
+
+```ini
+[Service]
+# Resolve purelib once: python -c 'import sysconfig; print(sysconfig.get_paths()["purelib"])'
+Environment="LD_LIBRARY_PATH=/path/to/venv/lib/python3.12/site-packages/nvidia/cublas/lib:/path/to/venv/lib/python3.12/site-packages/nvidia/cudnn/lib"
+```
+
+Then `sudo systemctl restart beacon-edge`.
+
+ASR empty / failed paths **never** return HTTP 422 `transcription_failed`; they continue structuring with `FALLBACK_TRANSCRIPT` and set `asr_fallback_used: true` on the structure response.
+
+### Ops: did someone test voice / reports?
+
+Edge emits structured INFO/WARNING lines (no transcript body). On the VM:
+
+```bash
+sudo journalctl -u beacon-edge --since "1 hour ago" | \
+  grep -E "draft created|ASR ok|ASR failed|structure ok|ticket submitted|checkin voice"
+```
+
+| Log fragment | Meaning |
+|---|---|
+| `draft created … has_audio=true` | Voice (or audio) attached to a draft |
+| `ASR ok … transcript_len=N` | Whisper produced real text |
+| `ASR failed … reason=…` | Fallback transcript used |
+| `structure ok … asr_fallback_used=false` | Structured from real ASR |
+| `ticket submitted …` | Report fully submitted |
+
+Crew/Dashboard web apps also send GA4 page views + report funnel events when online (`VITE_GA_MEASUREMENT_ID`).
 
 ### Smoke checks
 ```bash

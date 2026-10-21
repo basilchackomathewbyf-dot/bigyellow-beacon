@@ -32,9 +32,12 @@ from config import (
     OLLAMA_VISION_MODEL,
     OLLAMA_EMBED_MODEL,
     OLLAMA_TIMEOUT_SECONDS,
-    WHISPER_MODEL_SIZE,
-    WHISPER_DEVICE,
-    WHISPER_COMPUTE_TYPE,
+)
+from services.asr import (
+    FALLBACK_TRANSCRIPT,
+    AsrResult,
+    get_transcriber,
+    transcribe_audio as asr_transcribe_audio,
 )
 
 logger = logging.getLogger("edge.ai_gateway")
@@ -55,9 +58,6 @@ DISTRESS_PATTERNS = [
 ]
 
 DEFAULT_CLARIFYING_QUESTION = "Was the area cordoned off or tagged out immediately after discovery?"
-FALLBACK_TRANSCRIPT = (
-    "Oil mist observed near auxiliary generator 2 turbocharger return flange during 0400 rounds."
-)
 
 
 class SafetyRailTriggeredException(Exception):
@@ -70,7 +70,11 @@ class AIGateway:
     def __init__(self):
         self.generate_url = f"{OLLAMA_HOST}/api/generate"
         self.embeddings_url = f"{OLLAMA_HOST}/api/embeddings"
-        self.whisper_model = None
+
+    @property
+    def whisper_model(self):
+        """Backward-compat: expose underlying faster-whisper model once loaded."""
+        return get_transcriber().model
 
     # ------------------------------------------------------------------
     # Safety rails
@@ -97,39 +101,13 @@ class AIGateway:
     # ------------------------------------------------------------------
     # Whisper voice transcription (CUDA -> CPU -> canned fallback)
     # ------------------------------------------------------------------
-    def _load_whisper(self):
-        from faster_whisper import WhisperModel
-
-        try:
-            return WhisperModel(
-                WHISPER_MODEL_SIZE,
-                device=WHISPER_DEVICE,
-                compute_type=WHISPER_COMPUTE_TYPE,
-            )
-        except Exception as e:
-            logger.warning(
-                "Whisper %s on %s/%s failed (%s); falling back to small/cpu/int8",
-                WHISPER_MODEL_SIZE, WHISPER_DEVICE, WHISPER_COMPUTE_TYPE, e,
-            )
-            return WhisperModel("small", device="cpu", compute_type="int8")
-
-    async def transcribe_audio(self, audio_bytes: bytes, filename: str = "audio.wav") -> str:
-        try:
-            if self.whisper_model is None:
-                self.whisper_model = self._load_whisper()
-
-            temp_path = Path(f"/tmp/{filename}")
-            temp_path.write_bytes(audio_bytes)
-            try:
-                segments, info = self.whisper_model.transcribe(str(temp_path), beam_size=5)
-                transcript = " ".join([seg.text for seg in segments]).strip()
-                return transcript or "Voice memo recorded with normal background maritime ambient."
-            finally:
-                if temp_path.exists():
-                    temp_path.unlink()
-        except Exception as e:
-            logger.error("Whisper transcription failed: %s", e)
-            return FALLBACK_TRANSCRIPT
+    async def transcribe_audio(self, audio_bytes: bytes, filename: str = "audio.wav") -> AsrResult:
+        """
+        Transcribe voice memo. NEVER raises — on model/codec/empty failure returns
+        AsrResult(FALLBACK_TRANSCRIPT, asr_fallback_used=True). Callers must not
+        return HTTP 422 / transcription_failed for Whisper errors.
+        """
+        return await asr_transcribe_audio(audio_bytes, filename=filename)
 
     # ------------------------------------------------------------------
     # Vision: describe hazard photos with gemma3:4b

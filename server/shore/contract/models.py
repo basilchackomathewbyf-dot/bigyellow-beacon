@@ -80,6 +80,7 @@ class TicketStructureResponse(BaseModel):
     fields: TicketFields
     clarifying_question: str
     confidence: float = 0.95
+    asr_fallback_used: bool = False
 
 
 class TicketAction(BaseModel):

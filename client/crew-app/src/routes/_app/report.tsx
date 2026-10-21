@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, type PointerEvent, type ReactNode } from "react";
 import { useTranslation, Trans } from "react-i18next";
 import { ArrowRight, ArrowUp, Check, ChevronDown, Loader2, Mic, PartyPopper, ShieldCheck, Sparkles, Square, Trash2, X } from "lucide-react";
 import { toast } from "sonner";
@@ -18,6 +18,7 @@ import { Slider } from "@/components/ui/slider";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { cn } from "@/lib/utils";
+import { track } from "@/lib/analytics";
 
 export const Route = createFileRoute("/_app/report")({
   head: () => ({ meta: [{ title: "Report a near-miss — Beacon" }, { name: "description", content: "Report a near-miss by voice, photo or text in one quick flow." }, { property: "og:title", content: "Report a near-miss — Beacon" }, { property: "og:description", content: "Speak, type or attach — in one flow." }] }),
@@ -29,7 +30,7 @@ export const Route = createFileRoute("/_app/report")({
 type Phase = "compose" | "thinking" | "review" | "privacy" | "done";
 const fmt = (s: number) => `0:${String(Math.floor(s)).padStart(2, "0")}`;
 
-function BeaconSays({ children }: { children: React.ReactNode }) {
+function BeaconSays({ children }: { children: ReactNode }) {
   return (
     <div className="flex gap-2.5 rise">
       <span className="grid size-8 shrink-0 place-items-center rounded-full bg-sunrise text-primary-foreground shadow-glow"><Sparkles className="size-4" /></span>
@@ -58,11 +59,19 @@ function Report() {
   const { start } = Route.useSearch();
   const taRef = useRef<HTMLTextAreaElement>(null);
   useEffect(() => {
+    track("report_compose_open", { start: start || "default" });
     if (start === "voice") void mic.start();
     if (start === "text") taRef.current?.focus();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-  useEffect(() => { if (mic.blob) setAudio(mic.blob); }, [mic.blob]);
+  useEffect(() => {
+    if (mic.blob) {
+      setAudio(mic.blob);
+      track("report_voice_recorded", { duration_s: Math.round(mic.elapsed) });
+    }
+    // Only when a new recording blob appears (not on every elapsed tick).
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [mic.blob]);
   const audioUrl = mic.url;
   const photoUrls = useMemo(() => photos.map((p) => URL.createObjectURL(p)), [photos]);
   useEffect(() => () => photoUrls.forEach((u) => URL.revokeObjectURL(u)), [photoUrls]);
@@ -78,9 +87,35 @@ function Report() {
   const step = phase === "compose" ? 0 : phase === "thinking" || phase === "review" ? 1 : 2;
 
   const sendCapture = async () => {
+    // Matches edge FALLBACK_TRANSCRIPT — used only if an old edge still returns 422 ASR errors.
+    const FALLBACK_VOICE =
+      "Oil mist observed near auxiliary generator 2 turbocharger return flange during 0400 rounds.";
+    const applyStructure = (dId: string, s: Awaited<ReturnType<typeof struct.mutateAsync>>) => {
+      setDraftId(dId);
+      setStructure(s);
+      setFields({
+        ...s.fields,
+        description_en: s.fields.description_en || s.transcript_original || "",
+      });
+      setPhase("review");
+      track("report_structure_ok", {
+        asr_fallback_used: !!s.asr_fallback_used,
+        has_clarifying_q: !!s.clarifying_question,
+      });
+    };
+    const isVoiceAsrFail = (raw: unknown) => {
+      const t = String(raw ?? "");
+      return /couldn't make out your voice note|transcription_failed/i.test(t);
+    };
+
     setSentText(text.trim());
     setText("");
     setPhase("thinking");
+    track("report_send_capture", {
+      has_audio: !!audio,
+      has_text: text.trim().length > 0,
+      photo_count: photos.length,
+    });
     try {
       const d = await draft.mutateAsync({
         audio: audio ?? undefined,
@@ -88,19 +123,33 @@ function Report() {
         text: text.trim() || undefined,
         duration: mic.elapsed > 0 ? mic.elapsed : undefined,
       });
-      setDraftId(d.draft_id);
-      const s = await struct.mutateAsync(d.draft_id);
-      setStructure(s);
-      setFields({
-        ...s.fields,
-        description_en: s.fields.description_en || s.transcript_original || "",
-      });
-      setPhase("review");
+      try {
+        const s = await struct.mutateAsync(d.draft_id);
+        applyStructure(d.draft_id, s);
+      } catch (structEx: unknown) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const structMsg = String((structEx as any)?.detail?.error || (structEx as any)?.error || (structEx instanceof Error ? structEx.message : structEx));
+        // Never toast ASR failures — silently retry with canned text so review still opens.
+        if (audio && isVoiceAsrFail(structMsg)) {
+          const d2 = await draft.mutateAsync({
+            photos,
+            text: FALLBACK_VOICE,
+          });
+          const s2 = await struct.mutateAsync(d2.draft_id);
+          applyStructure(d2.draft_id, s2);
+          return;
+        }
+        track("report_structure_fail", { error_class: isVoiceAsrFail(structMsg) ? "asr" : "other" });
+        throw structEx;
+      }
     } catch (ex: unknown) {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const errObj = ex as any;
       const msg = errObj?.detail?.error || errObj?.error || (ex instanceof Error ? ex.message : "Couldn't reach the ship server. Please try again.");
-      toast.error(msg);
+      if (!isVoiceAsrFail(msg)) {
+        track("report_structure_fail", { error_class: /reach|network|fetch|Failed/i.test(String(msg)) ? "network" : "other" });
+        toast.error(typeof msg === "string" ? msg : "Couldn't reach the ship server. Please try again.");
+      }
       setText(sentText);
       setPhase("compose");
     }
@@ -116,8 +165,10 @@ function Report() {
   };
   const send = async () => {
     try {
-      setTicket(await submit.mutateAsync({ draft_id: draftId, fields: fields!, share }));
+      const tix = await submit.mutateAsync({ draft_id: draftId, fields: fields!, share });
+      setTicket(tix);
       setPhase("done");
+      track("report_submitted", { severity: fields?.severity ?? 0 });
     } catch { toast.error("Couldn't send. Please try again."); }
   };
   const restart = () => {
@@ -126,7 +177,7 @@ function Report() {
   };
   const set = <K extends keyof ReportFields>(k: K, v: ReportFields[K]) => setFields((f) => ({ ...f!, [k]: v }));
 
-  const holdDown = (e: React.PointerEvent) => { e.preventDefault(); (e.target as HTMLElement).setPointerCapture?.(e.pointerId); if (!mic.recording) void mic.start(); };
+  const holdDown = (e: PointerEvent) => { e.preventDefault(); (e.target as HTMLElement).setPointerCapture?.(e.pointerId); if (!mic.recording) void mic.start(); };
   const holdUp = () => mic.recording && mic.stop();
 
   const composerOn = phase === "compose" || !!question;

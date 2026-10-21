@@ -136,6 +136,8 @@ class TicketStructureResponse(BaseModel):
     fields: TicketFields
     clarifying_question: Optional[str] = None
     confidence: float = 0.95
+    # True when voice ASR was empty/failed and FALLBACK_TRANSCRIPT was used.
+    asr_fallback_used: bool = False
 
 
 class TicketAction(BaseModel):

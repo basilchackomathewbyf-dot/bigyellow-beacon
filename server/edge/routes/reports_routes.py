@@ -11,12 +11,15 @@ import os
 import re
 import io
 import wave
+import logging
 from pathlib import Path
 from datetime import datetime, timezone
 from typing import Dict, Any, Optional, List
 from fastapi import APIRouter, HTTPException, Depends, UploadFile, File, Form, status, Request
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
+
+logger = logging.getLogger("edge.reports")
 
 from contract.enums import Role, OnboardStatus, ShoreStatus, SSEEvent
 from contract.uuid7 import uuid7_str
@@ -28,7 +31,7 @@ from auth import get_current_edge_user, require_edge_role
 from security import generate_reporter_ref
 from services.pii_scrub import scrub_pii, strip_exif
 from services.sse_manager import sse_manager
-from services.ai_gateway import ai_gateway, SafetyRailTriggeredException
+from services.ai_gateway import ai_gateway, SafetyRailTriggeredException, FALLBACK_TRANSCRIPT
 from routes.auth_routes import resolve_crew_name
 
 router = APIRouter(prefix="/reports", tags=["Edge Ticket Reports"])
@@ -367,6 +370,17 @@ async def create_draft(
         "created_at": to_utc_iso(datetime.now(timezone.utc)),
     }
 
+    logger.info(
+        "draft created draft_id=%s crew_id=%s has_audio=%s audio_bytes=%s duration=%s photos=%s has_text=%s",
+        draft_id,
+        user.get("crew_id"),
+        bool(audio_meta),
+        len(audio_bytes_data or b""),
+        audio_duration_val,
+        len(processed_photos),
+        bool((text or "").strip()),
+    )
+
     return {
         "draft_id": draft_id,
         "message": "Draft created. Call /reports/drafts/{id}/structure to classify fields.",
@@ -395,12 +409,18 @@ async def structure_draft(
             detail={"error": "Draft not found"}
         )
 
+    import time as _time
+
+    t0 = _time.perf_counter()
     text = (draft.get("text") or "").strip()
 
     # Preserve any pre-structure free text as the native transcript source.
     native_source = (draft.get("text") or "").strip()
+    asr_fallback_used = False
+    source = "text" if text else "default"
 
     if not text and draft.get("audio"):
+        source = "audio"
         audio_info = draft["audio"]
         audio_bytes = draft.get("audio_bytes")
         if not audio_bytes and audio_info.get("local_path"):
@@ -408,17 +428,32 @@ async def structure_draft(
             if local_p.exists():
                 audio_bytes = local_p.read_bytes()
 
-        if audio_bytes:
-            transcribed = await ai_gateway.transcribe_audio(
-                audio_bytes,
-                filename=audio_info.get("filename", "voice.webm")
+        # NEVER return 422 transcription_failed — ASR wrapper always yields text
+        # (real transcript or FALLBACK_TRANSCRIPT) so structuring can continue.
+        try:
+            asr = await ai_gateway.transcribe_audio(
+                audio_bytes or b"",
+                filename=audio_info.get("filename", "voice.webm"),
             )
-            text = transcribed
-            draft["text"] = transcribed
-            draft["transcript_original"] = transcribed
-            native_source = transcribed
+            transcribed = asr.text
+            asr_fallback_used = bool(asr.asr_fallback_used)
+        except Exception:
+            logger.warning("structure_draft transcribe raised; using FALLBACK_TRANSCRIPT", exc_info=True)
+            transcribed = FALLBACK_TRANSCRIPT
+            asr_fallback_used = True
+
+        if not (transcribed or "").strip():
+            transcribed = FALLBACK_TRANSCRIPT
+            asr_fallback_used = True
+
+        text = transcribed
+        draft["text"] = transcribed
+        draft["transcript_original"] = transcribed
+        draft["asr_fallback_used"] = asr_fallback_used
+        native_source = transcribed
 
     if not text and draft.get("photos"):
+        source = "photo"
         # Photo-only draft: describe hazard with local vision model (gemma3:4b)
         photo_bytes_list: List[bytes] = []
         for p in draft["photos"]:
@@ -436,6 +471,7 @@ async def structure_draft(
             native_source = text
 
     if not text:
+        source = "default"
         text = "Seafarer observed equipment or environmental hazard during rounds."
         native_source = text
 
@@ -465,13 +501,28 @@ async def structure_draft(
     if isinstance(cq, str) and not cq.strip():
         cq = None
 
+    asr_flag = bool(draft.get("asr_fallback_used", asr_fallback_used))
+    transcript_out = draft.get("transcript_original") or text
+    logger.info(
+        "structure ok draft_id=%s crew_id=%s source=%s asr_fallback_used=%s "
+        "transcript_len=%s structure_ms=%s has_clarifying_q=%s",
+        draft_id,
+        user.get("crew_id"),
+        source,
+        asr_flag,
+        len(transcript_out or ""),
+        int((_time.perf_counter() - t0) * 1000),
+        bool(cq),
+    )
+
     return TicketStructureResponse(
         draft_id=draft_id,
         original_language=original_language,
-        transcript_original=draft.get("transcript_original") or text,
+        transcript_original=transcript_out,
         fields=fields,
         clarifying_question=cq,
         confidence=struct_res.get("confidence", 0.95),
+        asr_fallback_used=asr_flag,
     )
 
 
@@ -642,6 +693,15 @@ def finalize_report(
         channel=f"vessel:{vessel_id}:master",
         event_type=SSEEvent.TICKET_NEW.value,
         data=ticket_dict,
+    )
+
+    logger.info(
+        "ticket submitted ticket_id=%s draft_id=%s crew_id=%s severity=%s vessel_id=%s",
+        ticket_id,
+        req.draft_id,
+        crew_id,
+        ticket.severity,
+        vessel_id,
     )
 
     return ticket_dict

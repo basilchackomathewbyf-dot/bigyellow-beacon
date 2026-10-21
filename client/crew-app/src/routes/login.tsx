@@ -5,6 +5,7 @@ import logo from "@/assets/logo.png";
 import { login } from "@/api/endpoints/auth";
 import { useSession } from "@/lib/session";
 import { Label } from "@/components/ui/label";
+import { track } from "@/lib/analytics";
 
 export const Route = createFileRoute("/login")({
   ssr: false,
@@ -57,10 +58,12 @@ function Login() {
 
     try {
       const r = await login(username.trim(), password);
+      track("login_ok", { role: r.user.role });
       signIn(r.user, r.token);
       nav({ to: r.user.role === "master" ? "/master/board" : "/home", replace: true });
     } catch (ex: unknown) {
       const msg = ex instanceof Error ? ex.message : "That username or password doesn't match.";
+      track("login_fail", { error_class: /401|match|password|username|invalid/i.test(msg) ? "auth" : "other" });
       setErr(msg);
     } finally {
       setBusy(false);

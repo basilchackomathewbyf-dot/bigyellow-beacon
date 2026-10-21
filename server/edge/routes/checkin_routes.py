@@ -11,6 +11,7 @@ Aligned with frontend "Chat with Beacon" contract (/wellbeing).
 Also available under /api/v1 via dual mount in main.py.
 """
 
+import logging
 from datetime import datetime, timezone, timedelta
 from typing import Dict, Any, Optional, List
 from fastapi import APIRouter, HTTPException, Depends, Query, status, UploadFile, File, Request, Response
@@ -28,6 +29,7 @@ from services.sse_manager import sse_manager
 from services.ai_gateway import ai_gateway, SafetyRailTriggeredException
 from routes.auth_routes import resolve_crew_name
 
+logger = logging.getLogger("edge.checkin")
 router = APIRouter(prefix="/checkins", tags=["Wellbeing Check-in & Welfare"])
 
 # Memory-only store for interactive checkin chat sessions (never persisted to DB!)
@@ -306,7 +308,17 @@ async def transcribe_checkin_turn(
         return {"text": fallback}
 
     filename = getattr(audio_file, "filename", None) or f"checkin_{checkin_id}.webm"
-    transcript = await ai_gateway.transcribe_audio(audio_bytes, filename=filename)
+    asr = await ai_gateway.transcribe_audio(audio_bytes, filename=filename)
+    transcript = getattr(asr, "text", asr) or ""
+    asr_fallback = bool(getattr(asr, "asr_fallback_used", False)) or not bool(transcript)
+    logger.info(
+        "checkin voice checkin_id=%s crew_id=%s asr_fallback_used=%s transcript_len=%s bytes=%s",
+        checkin_id,
+        user.get("crew_id"),
+        asr_fallback,
+        len(transcript or fallback),
+        len(audio_bytes),
+    )
     return {"text": transcript or fallback}
 
 

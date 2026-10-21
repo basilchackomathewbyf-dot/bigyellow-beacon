@@ -4,6 +4,7 @@ import {
   Link,
   createRootRouteWithContext,
   useRouter,
+  useRouterState,
   HeadContent,
   Scripts,
   type ErrorComponentProps,
@@ -14,6 +15,7 @@ import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { SessionProvider } from "@/lib/session";
 import { Toaster } from "@/components/ui/sonner";
+import { initAnalytics, track, trackPageView } from "@/lib/analytics";
 import "@/i18n";
 
 function NotFoundComponent() {
@@ -38,6 +40,7 @@ function ErrorComponent({ error, reset }: ErrorComponentProps) {
   const router = useRouter();
   useEffect(() => {
     reportLovableError(error, { boundary: "tanstack_root_error_component" });
+    track("app_error", { boundary: "root" });
   }, [error]);
 
   return (
@@ -103,12 +106,24 @@ function RootShell({ children }: { children: ReactNode }) {
   );
 }
 
+function AnalyticsListener() {
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
+  useEffect(() => {
+    initAnalytics();
+  }, []);
+  useEffect(() => {
+    trackPageView(pathname);
+  }, [pathname]);
+  return null;
+}
+
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
 
   return (
     <QueryClientProvider client={queryClient}>
       <SessionProvider>
+        <AnalyticsListener />
         <Outlet />
         <Toaster position="top-center" />
       </SessionProvider>

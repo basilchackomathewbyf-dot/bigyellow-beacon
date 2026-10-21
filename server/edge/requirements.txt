@@ -10,10 +10,16 @@ passlib[argon2]>=1.7.4
 argon2-cffi>=23.1.0
 python-dotenv>=1.0.1
 faster-whisper>=1.0.0
+# PyAV 15+ removed av.open(..., metadata_errors=) used by faster-whisper 1.2.x
+av>=12,<15
 requests>=2.31.0
 httpx>=0.27.0
 pytest>=8.0.0
 pytest-asyncio>=0.23.0
 python-multipart>=0.0.9
 pillow>=10.0.0
+
+# Optional GPU (T4 / CUDA 12) — also: pip install -e ".[gpu]"
+# nvidia-cublas-cu12
+# nvidia-cudnn-cu12==9.*
 

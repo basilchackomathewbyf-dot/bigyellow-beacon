@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import sea from "@/assets/login-sea.jpg";
+import { track } from "@/lib/analytics";
 
 export const Route = createFileRoute("/login")({
   head: () => ({
@@ -33,10 +34,14 @@ function LoginPage() {
   const m = useMutation({
     mutationFn: (v: { email: string; password: string }) => login(v.email, v.password),
     onSuccess: (res) => {
+      track("login_ok", { role: res.user.role ?? "unknown" });
       authStore.set(res.token, res.user);
       navigate({ to: "/tickets" });
     },
-    onError: (e: Error) => toast.error(e.message),
+    onError: (e: Error) => {
+      track("login_fail", { error_class: /401|password|email|invalid|match/i.test(e.message) ? "auth" : "other" });
+      toast.error(e.message);
+    },
   });
   const submit = (e: FormEvent) => {
     e.preventDefault();
