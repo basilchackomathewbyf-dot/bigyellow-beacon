@@ -8,6 +8,7 @@ Edge Auth Routes (/auth/*, /me)
 - PUT /me/preferences
 """
 
+import logging
 import re
 import secrets
 import string
@@ -38,6 +39,7 @@ from security import (
 )
 from auth import get_current_edge_user, require_edge_role
 
+logger = logging.getLogger("edge.auth")
 router = APIRouter(tags=["Edge Authentication"])
 
 
@@ -87,33 +89,39 @@ def resolve_crew_name(crew_id: Optional[str], default_name: Optional[str] = None
 
 
 def ensure_default_crew_roster(db: Session):
-    """Seed base vessel crew accounts if missing."""
-    for uid in ("01a14acb-e04c-79f8-aa4e-0395dcf068d0", "u-master", "u-crew", "u-3", "u-4", "u-5", "u-6", "u-7", "u-8"):
-        info = DEFAULT_CREW_ROSTER[uid]
-        acc = db.query(CrewAccountModel).filter(
-            (CrewAccountModel.id == uid) | (CrewAccountModel.username == info["username"])
-        ).first()
-        if not acc:
-            new_acc = CrewAccountModel(
-                id=uid,
-                username=info["username"],
-                password_hash=hash_pin_argon2("123456" if info["role"] == "master" else "1234"),
-                name=info["name"],
-                rank=info["rank"],
-                rank_band=info["rank_band"].lower(),
-                role=info["role"],
-                language="en",
-                vessel_id=VESSEL_ID,
-                created_at=get_utc_now(),
-                created_by="SYSTEM",
-            )
-        elif uid in ("u-master", "u-crew", "crew", "01a14acb-e04c-79f8-aa4e-0395dcf068d0") and acc.name != info["name"]:
-            acc.name = info["name"]
-            db.add(acc)
+    """Seed base vessel crew accounts if missing. Never raises — login must stay available."""
     try:
+        for uid in ("01a14acb-e04c-79f8-aa4e-0395dcf068d0", "u-master", "u-crew", "u-3", "u-4", "u-5", "u-6", "u-7", "u-8"):
+            info = DEFAULT_CREW_ROSTER[uid]
+            acc = db.query(CrewAccountModel).filter(
+                (CrewAccountModel.id == uid) | (CrewAccountModel.username == info["username"])
+            ).first()
+            if not acc:
+                db.add(
+                    CrewAccountModel(
+                        id=uid,
+                        username=info["username"],
+                        password_hash=hash_pin_argon2("123456" if info["role"] == "master" else "1234"),
+                        name=info["name"],
+                        rank=info["rank"],
+                        rank_band=info["rank_band"].lower(),
+                        role=info["role"],
+                        language="en",
+                        vessel_id=VESSEL_ID,
+                        created_at=get_utc_now(),
+                        created_by="SYSTEM",
+                    )
+                )
+            elif uid in ("u-master", "u-crew", "crew", "01a14acb-e04c-79f8-aa4e-0395dcf068d0") and acc.name != info["name"]:
+                acc.name = info["name"]
+                db.add(acc)
         db.commit()
     except Exception:
-        db.rollback()
+        logger.exception("ensure_default_crew_roster failed; continuing without seed")
+        try:
+            db.rollback()
+        except Exception:
+            pass
 
 
 @router.post("/auth/pairing-codes", response_model=PairingCodeResponse, status_code=status.HTTP_201_CREATED)
@@ -326,17 +334,29 @@ def login(
                 )
 
         ensure_default_crew_roster(db)
-        account = db.query(CrewAccountModel).filter(
-            (func.lower(CrewAccountModel.id) == u) |
-            (func.lower(CrewAccountModel.username) == u)
-        ).first()
+        account = None
+        try:
+            account = db.query(CrewAccountModel).filter(
+                (func.lower(CrewAccountModel.id) == u) |
+                (func.lower(CrewAccountModel.username) == u)
+            ).first()
+        except Exception:
+            logger.exception("crew account lookup failed for username=%s; trying demo login path", u)
+            try:
+                db.rollback()
+            except Exception:
+                pass
 
         if account:
-            valid_pwd = (
-                verify_pin_argon2(account.password_hash, pwd)
-                or account.password_hash == pwd
-                or pwd in ("1234", "123456", "crew123", "master123")
-            )
+            try:
+                valid_pwd = (
+                    verify_pin_argon2(account.password_hash, pwd)
+                    or account.password_hash == pwd
+                    or pwd in ("1234", "123456", "crew123", "master123")
+                )
+            except Exception:
+                logger.exception("password verify failed for username=%s", u)
+                valid_pwd = pwd in ("1234", "123456", "crew123", "master123")
             if not valid_pwd:
                 raise HTTPException(
                     status_code=status.HTTP_401_UNAUTHORIZED,
@@ -347,7 +367,7 @@ def login(
             is_officer = account_role == Role.MASTER or (account.rank_band or "").lower() == "officer"
             token = create_edge_session_token(
                 crew_id=account.id,
-                role=account_role,
+                role=str(account_role.value if hasattr(account_role, "value") else account_role),
                 vessel_id=account.vessel_id or VESSEL_ID,
             )
             user_data = {
@@ -377,7 +397,7 @@ def login(
             role = Role.MASTER if is_master else Role.CREW
             token = create_edge_session_token(
                 crew_id=u,
-                role=role,
+                role=str(role.value),
                 vessel_id=VESSEL_ID,
             )
             user_data = {

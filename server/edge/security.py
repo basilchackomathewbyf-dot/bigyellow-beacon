@@ -50,10 +50,11 @@ def create_edge_session_token(
     """Generate 12-hour Edge session JWT."""
     now = datetime.now(timezone.utc)
     expire = now + (expires_delta or timedelta(hours=SESSION_EXPIRE_HOURS))
+    role_str = getattr(role, "value", None) or str(role)
     payload = {
         "sub": crew_id,
         "crew_id": crew_id,
-        "role": role,
+        "role": role_str,
         "vessel_id": vessel_id,
         "device_id": device_id,
         "iat": int(now.timestamp()),
