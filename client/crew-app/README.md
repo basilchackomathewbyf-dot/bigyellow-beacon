@@ -4,7 +4,7 @@ I need live mic and camera feature also.
 
 This project was built with [Lovable](https://lovable.dev).
 
-**Live app**: https://beacon-crew-talk.lovable.app
+**Live app**: https://beacon.bigyellow.ai/
 
 ## Build with Lovable
 

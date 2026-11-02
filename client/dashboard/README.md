@@ -4,7 +4,7 @@ reference @project:3931f0ee-d6ad-4d04-80f9-ce4de4282c68:"Beacon Crew Talk" ...fr
 
 This project was built with [Lovable](https://lovable.dev).
 
-**Live app**: https://beacon-crew-hub.lovable.app
+**Live app**: https://beacon-dashboard.bigyellow.ai/
 
 ## Build with Lovable
 

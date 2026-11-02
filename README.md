@@ -106,6 +106,6 @@ cd client/dashboard && npm test
 | Master | Same app, Master view | Live alert, act on board, morning brief, sync panel. |
 | Fleet safety team | `client/dashboard` | Queue, analysis, accept or reject, anonymous reply, learning and Daily Anchor studio. |
 
-Live prototypes (mock data): [crew and Master](https://beacon-crew-talk.lovable.app) · [dashboard](https://beacon-crew-hub.lovable.app).
+Live prototypes (mock data): [crew and Master](https://beacon.bigyellow.ai/) · [dashboard](https://beacon-dashboard.bigyellow.ai/).
 
 Service notes: [edge](server/edge/README.md) · [shore](server/shore/README.md) · [crew app](client/crew-app/README.md) · [dashboard](client/dashboard/README.md).
